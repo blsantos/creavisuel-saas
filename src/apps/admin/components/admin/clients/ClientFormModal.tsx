@@ -43,6 +43,8 @@ interface FormData {
   slug: string;
   name: string;
   ownerEmail: string;
+  ownerPassword: string;
+  autoGeneratePassword: boolean;
   planId: string;
   status: 'active' | 'trial' | 'suspended';
 
@@ -99,6 +101,8 @@ const ClientFormModal = ({ clientId, onClose }: ClientFormModalProps) => {
     slug: '',
     name: '',
     ownerEmail: '',
+    ownerPassword: '',
+    autoGeneratePassword: true,
     planId: '',
     status: 'trial',
     primaryColor: '#10b981',
@@ -153,7 +157,9 @@ const ClientFormModal = ({ clientId, onClose }: ClientFormModalProps) => {
         setFormData({
           slug: tenant.slug || '',
           name: tenant.name || '',
-          ownerEmail: tenant.owner_email || '',
+          ownerEmail: tenant.login_email || '',
+          ownerPassword: '',
+          autoGeneratePassword: true,
           planId: tenant.plan_id || '',
           status: tenant.status || 'trial',
           primaryColor: branding.primaryColor || '#10b981',
@@ -334,25 +340,48 @@ const ClientFormModal = ({ clientId, onClose }: ClientFormModalProps) => {
 
       // 3. Create or update tenant using admin service
       if (!clientId) {
-        // Creating new tenant
+        // Creating new tenant with credentials
         toast({
           title: "Création du client...",
-          description: "Configuration des paramètres",
+          description: "Configuration des paramètres et credentials",
         });
 
-        const result = await createTenant({
-          slug: formData.slug,
-          name: formData.name,
-          status: formData.status,
+        // Use SQL function to create tenant with auth
+        const { data: credentialsData, error: credsError } = await supabaseAdmin.rpc(
+          'create_tenant_with_credentials',
+          {
+            p_slug: formData.slug,
+            p_name: formData.name,
+            p_email: formData.ownerEmail,
+            p_password: formData.autoGeneratePassword ? null : formData.ownerPassword,
+            p_plan_id: formData.planId || null,
+          }
+        );
+
+        if (credsError) {
+          throw new Error(`Erreur création credentials: ${credsError.message}`);
+        }
+
+        tenantId = credentialsData[0].tenant_id;
+
+        // Show generated password if auto-generated
+        if (formData.autoGeneratePassword && credentialsData[0].generated_password) {
+          toast({
+            title: "🔐 Credentials générés",
+            description: `Email: ${credentialsData[0].email}\nMot de passe: ${credentialsData[0].generated_password}\n\n⚠️ Notez ces informations ! Le mot de passe ne sera plus affiché.`,
+            duration: 15000,
+          });
+        }
+
+        // Now update branding and AI config
+        const result = await updateTenantConfig(tenantId, {
           branding,
           ai_config: aiConfig,
         });
 
         if (!result.success) {
-          throw new Error(result.error || 'Erreur lors de la création du client');
+          throw new Error(result.error || 'Erreur lors de la configuration');
         }
-
-        tenantId = result.tenant!.id;
       } else {
         // Updating existing tenant
         toast({
@@ -360,6 +389,7 @@ const ClientFormModal = ({ clientId, onClose }: ClientFormModalProps) => {
           description: "Sauvegarde des modifications",
         });
 
+        // Update basic tenant info
         const { error: tenantError } = await supabaseAdmin
           .from('tenants')
           .update({
@@ -367,10 +397,33 @@ const ClientFormModal = ({ clientId, onClose }: ClientFormModalProps) => {
             name: formData.name,
             status: formData.status,
             plan_id: formData.planId || null,
+            login_email: formData.ownerEmail,
           })
           .eq('id', clientId);
 
         if (tenantError) throw tenantError;
+
+        // Update password if provided (using SQL function for proper hashing)
+        if (!formData.autoGeneratePassword && formData.ownerPassword) {
+          const { error: pwError } = await supabaseAdmin.rpc('update_tenant_password', {
+            p_tenant_id: clientId,
+            p_new_password: formData.ownerPassword,
+          });
+
+          if (pwError) {
+            console.error('Error updating password:', pwError);
+            toast({
+              title: "Avertissement",
+              description: "Email mis à jour, mais erreur lors du changement de mot de passe",
+              variant: "destructive",
+            });
+          } else {
+            toast({
+              title: "Mot de passe mis à jour",
+              description: "Le nouveau mot de passe a été enregistré",
+            });
+          }
+        }
 
         const result = await updateTenantConfig(clientId, {
           branding,
@@ -458,6 +511,35 @@ const ClientFormModal = ({ clientId, onClose }: ClientFormModalProps) => {
                   placeholder="contact@jeffterra.fr"
                   className="bg-white/5 border-white/10 text-white"
                 />
+                <p className="text-xs text-slate-500 mt-1">Email de connexion du client</p>
+              </div>
+
+              <div className="col-span-2 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="autoGeneratePassword"
+                    checked={formData.autoGeneratePassword}
+                    onCheckedChange={(checked) => updateFormData('autoGeneratePassword', checked)}
+                  />
+                  <Label htmlFor="autoGeneratePassword" className="text-slate-300 cursor-pointer">
+                    Générer un mot de passe automatiquement
+                  </Label>
+                </div>
+
+                {!formData.autoGeneratePassword && (
+                  <div>
+                    <Label htmlFor="ownerPassword" className="text-slate-300">Mot de passe *</Label>
+                    <Input
+                      id="ownerPassword"
+                      type="password"
+                      value={formData.ownerPassword}
+                      onChange={(e) => updateFormData('ownerPassword', e.target.value)}
+                      placeholder="Entrer un mot de passe personnalisé"
+                      className="bg-white/5 border-white/10 text-white"
+                    />
+                    <p className="text-xs text-slate-500 mt-1">Minimum 8 caractères</p>
+                  </div>
+                )}
               </div>
 
               <div>

@@ -6,7 +6,7 @@ import { Input } from "../components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { LogOut, Lock, Home, Save, Eye, Monitor, Tablet, Smartphone, RotateCcw, ArrowLeft, LayoutDashboard, Wrench, Users, Palette, Brain } from "lucide-react";
+import { LogOut, Lock, Home, Save, Eye, Monitor, Tablet, Smartphone, RotateCcw, ArrowLeft, LayoutDashboard, Wrench, Users, Palette, Brain, BarChart3 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import GrapesEditor from "../components/admin/GrapesEditor";
 import PagesDashboard from "../components/admin/PagesDashboard";
@@ -14,6 +14,7 @@ import ToolsPanel from "../components/admin/tools/ToolsPanel";
 import Clients from "./Clients";
 import ImageStudioDashboard from "./ImageStudioDashboard";
 import AIAssistants from "./AIAssistants";
+import Dashboard from "./Dashboard";
 import { getPageName } from "@/lib/contentToHtml";
 import creavisuelLogo from "@/assets/logo-creavisuel2025.png";
 import "../components/admin/GrapesEditorStyles.css";
@@ -60,7 +61,7 @@ const AdminLogin = () => {
 };
 
 type AdminView = "dashboard" | "editor";
-type AdminTab = "pages" | "clients" | "ai" | "studio" | "tools";
+type AdminTab = "stats" | "pages" | "clients" | "ai" | "studio" | "tools";
 
 const AdminDashboard = () => {
   const { logout } = useAuth();
@@ -70,7 +71,7 @@ const AdminDashboard = () => {
   const [editorKey, setEditorKey] = useState(0);
   const [currentView, setCurrentView] = useState<AdminView>("dashboard");
   const [editingPageId, setEditingPageId] = useState<string>("home");
-  const [activeTab, setActiveTab] = useState<AdminTab>("pages");
+  const [activeTab, setActiveTab] = useState<AdminTab>("stats");
 
   const handleSave = (html: string, css: string) => {
     toast({ 
@@ -142,6 +143,13 @@ const AdminDashboard = () => {
           <div className="bg-[#2a2a2a] border-b border-[#3a3a3a] px-6">
             <TabsList className="bg-transparent h-12 p-0 gap-4">
               <TabsTrigger
+                value="stats"
+                className="data-[state=active]:bg-transparent data-[state=active]:text-white text-gray-400 px-0 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-primary"
+              >
+                <BarChart3 className="w-4 h-4 mr-2" />
+                Dashboard
+              </TabsTrigger>
+              <TabsTrigger
                 value="pages"
                 className="data-[state=active]:bg-transparent data-[state=active]:text-white text-gray-400 px-0 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-primary"
               >
@@ -178,6 +186,10 @@ const AdminDashboard = () => {
               </TabsTrigger>
             </TabsList>
           </div>
+
+          <TabsContent value="stats" className="flex-1 mt-0 h-[calc(100vh-112px)]">
+            <Dashboard />
+          </TabsContent>
 
           <TabsContent value="pages" className="flex-1 mt-0">
             <PagesDashboard onEditPage={handleEditPage} />

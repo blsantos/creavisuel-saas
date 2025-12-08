@@ -139,7 +139,7 @@ export const useChatWithSupabase = (options: UseChatWithSupabaseOptions = {}) =>
     }
 
     try {
-      const { data, error } = await supabase
+      const { data, error} = await supabase
         .from('messages')
         .insert({
           conversation_id: conversationId,
@@ -166,7 +166,10 @@ export const useChatWithSupabase = (options: UseChatWithSupabaseOptions = {}) =>
   };
 
   // Send message to webhook (if configured) and save response
-  const sendToWebhook = async (userMessage: string): Promise<string | null> => {
+  const sendToWebhook = async (
+    userMessage: string,
+    messageType: 'text' | 'image' | 'video' | 'audio' | 'pdf' = 'text'
+  ): Promise<string | null> => {
     const webhookUrl = options.webhookUrl || tenant?.config?.ai_config?.webhookUrl;
 
     if (!webhookUrl) {
@@ -189,7 +192,7 @@ export const useChatWithSupabase = (options: UseChatWithSupabaseOptions = {}) =>
         body: JSON.stringify({
           chatInput: userMessage,
           message: userMessage,
-          type: 'text',
+          type: messageType,
           sessionId: conversationId,
           conversationHistory: recentMessages,
           tenant: {
@@ -245,7 +248,7 @@ export const useChatWithSupabase = (options: UseChatWithSupabaseOptions = {}) =>
 
   // Send user message
   const sendMessage = useCallback(
-    async (text: string) => {
+    async (text: string, messageType: 'text' | 'image' | 'video' | 'audio' | 'pdf' = 'text') => {
       const trimmedText = text.trim();
       if (!trimmedText || trimmedText.length > 10000) {
         toast({
@@ -259,13 +262,13 @@ export const useChatWithSupabase = (options: UseChatWithSupabaseOptions = {}) =>
       setIsLoading(true);
 
       try {
-        // 1. Save user message
-        const userMessage = await addMessage('user', trimmedText);
+        // 1. Save user message with type metadata
+        const userMessage = await addMessage('user', trimmedText, { type: messageType });
         if (!userMessage) throw new Error('Failed to save user message');
 
-        // 2. Call webhook for AI response
+        // 2. Call webhook for AI response with message type
         try {
-          const aiResponse = await sendToWebhook(trimmedText);
+          const aiResponse = await sendToWebhook(trimmedText, messageType);
 
           // 3. Save AI response
           if (aiResponse) {

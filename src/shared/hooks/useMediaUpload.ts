@@ -10,8 +10,26 @@ export const useMediaUpload = () => {
     file: File,
     conversationId: string
   ): Promise<string | null> => {
-    if (!user || !isSupabaseConfigured() || !supabase) {
-      console.error('User must be authenticated and Supabase configured to upload files');
+    console.log('🔍 useMediaUpload - Starting upload:', {
+      fileName: file.name,
+      conversationId,
+      hasUser: !!user,
+      isConfigured: isSupabaseConfigured(),
+      hasSupabase: !!supabase
+    });
+
+    if (!user) {
+      console.error('❌ No user authenticated');
+      return null;
+    }
+
+    if (!isSupabaseConfigured()) {
+      console.error('❌ Supabase not configured');
+      return null;
+    }
+
+    if (!supabase) {
+      console.error('❌ Supabase client not available');
       return null;
     }
 
@@ -20,22 +38,32 @@ export const useMediaUpload = () => {
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}/${conversationId}/${Date.now()}.${fileExt}`;
 
+      console.log('📁 Uploading to path:', fileName);
+
       const { error: uploadError } = await supabase.storage
         .from('chat-media')
         .upload(fileName, file);
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('❌ Upload error:', uploadError);
+        throw uploadError;
+      }
+
+      console.log('✅ File uploaded successfully');
 
       const { data: { publicUrl } } = supabase.storage
         .from('chat-media')
         .getPublicUrl(fileName);
 
+      console.log('🔗 Public URL:', publicUrl);
+
       return publicUrl;
     } catch (error) {
-      console.error('Error uploading media:', error);
+      console.error('❌ Error uploading media:', error);
       return null;
     } finally {
       setIsUploading(false);
+      console.log('🏁 Upload process completed');
     }
   }, [user]);
 

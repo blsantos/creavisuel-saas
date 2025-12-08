@@ -8,7 +8,7 @@ import { AuthProvider } from '@/shared/contexts/AuthContext';
 import { SuperAdminProvider } from '@/shared/contexts/SuperAdminContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { TenantSelector } from './components/TenantSelector';
-import DashboardPage from './pages/DashboardPage';
+import EnhancedDashboardPage from './pages/EnhancedDashboardPage';
 import ChatPage from './pages/ChatPage';
 import LibraryPage from './pages/LibraryPage';
 import TemplatesPage from './pages/TemplatesPage';
@@ -59,7 +59,7 @@ const ClientApp = () => {
           <Route path="/" element={
             <ProtectedRoute>
               <AnimatedPage>
-                <DashboardPage />
+                <EnhancedDashboardPage />
               </AnimatedPage>
             </ProtectedRoute>
           } />

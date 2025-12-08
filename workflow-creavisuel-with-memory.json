@@ -1,0 +1,283 @@
+{
+  "name": "CréaVisuel Agent IA avec Mémoire",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "chat",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "chat-trigger",
+      "name": "Chat Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Extraire les données du webhook\nconst input = $input.first().json;\n\nreturn {\n  json: {\n    sessionId: input.sessionId || 'default-session',\n    message: input.message || input.chatInput,\n    conversationHistory: input.conversationHistory || [],\n    tenant: input.tenant || {},\n    type: input.type || 'text'\n  }\n};"
+      },
+      "id": "extract-input",
+      "name": "Extract Input",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://supabase.lecoach.digital/rest/v1/n8n_conversations",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "session_id",
+              "value": "=eq.{{$json.sessionId}}"
+            },
+            {
+              "name": "order",
+              "value": "created_at.desc"
+            },
+            {
+              "name": "limit",
+              "value": "1"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzY0NzkzMDU2LCJleHAiOjIwODAxNTMwNTZ9.3PK2meYhQpHE5TSpRC8TP7owHpBfCFXsrTTOuNCtgbc"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzY0NzkzMDU2LCJleHAiOjIwODAxNTMwNTZ9.3PK2meYhQpHE5TSpRC8TP7owHpBfCFXsrTTOuNCtgbc"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "load-memory",
+      "name": "Charger Mémoire",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Récupérer les données\nconst input = $('Extract Input').first().json;\nconst sessionId = input.sessionId;\nconst userMessage = input.message;\nconst conversationHistory = input.conversationHistory || [];\nconst tenant = input.tenant;\n\n// Charger la mémoire\nconst memoryData = $input.first().json;\nconst memory = Array.isArray(memoryData) && memoryData.length > 0 ? memoryData[0] : null;\n\n// Short-term memory (contexte immédiat)\nconst shortTermMemory = memory?.short_term_memory || {};\nconst lastTopic = shortTermMemory.last_topic || 'Nouveau sujet';\nconst userPreferences = shortTermMemory.preferences || {};\nconst contextWindow = shortTermMemory.context_window || [];\n\n// Long-term memory (connaissances persistantes)\nconst longTermMemory = memory?.long_term_memory || {};\nconst userContext = longTermMemory.user_context || '';\nconst keyFacts = longTermMemory.key_facts || [];\nconst importantInstructions = longTermMemory.important_instructions || [];\n\n// Construire le contexte enrichi\nlet enrichedContext = `# Contexte Utilisateur\\n\\n`;\nenrichedContext += `**Tenant:** ${tenant.name || 'Unknown'} (${tenant.slug || 'unknown'})\\n`;\nenrichedContext += `**Session ID:** ${sessionId}\\n`;\nenrichedContext += `**Nombre de messages:** ${memory?.message_count || 0}\\n\\n`;\n\nenrichedContext += `## Mémoire à Court Terme (Session actuelle)\\n`;\nenrichedContext += `- **Dernier sujet discuté:** ${lastTopic}\\n`;\nif (Object.keys(userPreferences).length > 0) {\n  enrichedContext += `- **Préférences:** ${JSON.stringify(userPreferences)}\\n`;\n}\nif (contextWindow.length > 0) {\n  enrichedContext += `- **Derniers échanges:**\\n`;\n  contextWindow.slice(-3).forEach(msg => {\n    enrichedContext += `  - ${msg.role}: ${msg.content.substring(0, 100)}...\\n`;\n  });\n}\n\nenrichedContext += `\\n## Mémoire à Long Terme (Connaissances persistantes)\\n`;\nif (userContext) {\n  enrichedContext += `**Contexte utilisateur:** ${userContext}\\n`;\n}\nif (keyFacts.length > 0) {\n  enrichedContext += `**Faits importants:**\\n${keyFacts.map(f => `- ${f}`).join('\\n')}\\n`;\n}\nif (importantInstructions.length > 0) {\n  enrichedContext += `**Instructions importantes:**\\n${importantInstructions.map(i => `- ${i}`).join('\\n')}\\n`;\n}\n\nenrichedContext += `\\n## Historique Récent\\n`;\nif (conversationHistory.length > 0) {\n  enrichedContext += conversationHistory.slice(-10).map(m => `**${m.role}:** ${m.content}`).join('\\n');\n} else {\n  enrichedContext += `Aucun historique récent disponible.\\n`;\n}\n\n// System prompt avec contexte enrichi\nconst systemPrompt = `${tenant.aiConfig?.systemPrompt || 'Tu es un assistant IA serviable et professionnel.'}\\n\\n${enrichedContext}\\n\\n**INSTRUCTIONS:**\\n${importantInstructions.length > 0 ? importantInstructions.map(i => `- ${i}`).join('\\n') : '- Réponds de manière cohérente et utile'}\\n\\nRéponds de manière ${tenant.aiConfig?.tone || 'professionnelle'} et cohérente avec le contexte ci-dessus.`;\n\nreturn {\n  json: {\n    sessionId,\n    userMessage,\n    systemPrompt,\n    enrichedContext,\n    memory: memory || null,\n    tenant,\n    messageCount: (memory?.message_count || 0) + 1\n  }\n};"
+      },
+      "id": "prepare-context",
+      "name": "Préparer Contexte Enrichi",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "={{$json.systemPrompt}}"
+            },
+            {
+              "role": "user",
+              "content": "={{$json.userMessage}}"
+            }
+          ]
+        },
+        "options": {
+          "temperature": 0.7,
+          "maxTokens": 2000
+        }
+      },
+      "id": "openai-gpt",
+      "name": "OpenAI GPT",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1,
+      "position": [1050, 300],
+      "credentials": {
+        "openAiApi": {
+          "id": "1",
+          "name": "OpenAI API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "// Récupérer les données\nconst context = $('Préparer Contexte Enrichi').first().json;\nconst aiResponseRaw = $input.first().json;\n\n// Extraire la réponse de l'IA\nconst aiResponse = aiResponseRaw.choices?.[0]?.message?.content || aiResponseRaw.text || 'Pas de réponse';\n\nconst sessionId = context.sessionId;\nconst userMessage = context.userMessage;\nconst tenant = context.tenant;\nconst memory = context.memory;\n\n// Extraire le sujet actuel (simplification)\nconst currentTopic = userMessage.substring(0, 100);\n\n// Mettre à jour short-term memory\nconst existingContextWindow = memory?.short_term_memory?.context_window || [];\nconst shortTermMemory = {\n  last_topic: currentTopic,\n  last_user_message: userMessage,\n  last_ai_response: aiResponse.substring(0, 500),\n  preferences: memory?.short_term_memory?.preferences || {},\n  context_window: [\n    ...existingContextWindow.slice(-4), // Garder 4 derniers échanges\n    {\n      role: 'user',\n      content: userMessage,\n      timestamp: new Date().toISOString()\n    },\n    {\n      role: 'assistant',\n      content: aiResponse.substring(0, 500),\n      timestamp: new Date().toISOString()\n    }\n  ]\n};\n\n// Long-term memory (conserver + ajouter)\nconst longTermMemory = {\n  ...(memory?.long_term_memory || {}),\n  last_interaction: new Date().toISOString()\n};\n\nreturn {\n  json: {\n    session_id: sessionId,\n    tenant_id: tenant.id,\n    short_term_memory: shortTermMemory,\n    long_term_memory: longTermMemory,\n    message_count: context.messageCount,\n    aiResponse: aiResponse\n  }\n};"
+      },
+      "id": "prepare-memory-save",
+      "name": "Préparer Sauvegarde Mémoire",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1250, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://supabase.lecoach.digital/rest/v1/n8n_conversations",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "session_id",
+              "value": "=eq.{{$json.session_id}}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzY0NzkzMDU2LCJleHAiOjIwODAxNTMwNTZ9.3PK2meYhQpHE5TSpRC8TP7owHpBfCFXsrTTOuNCtgbc"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzY0NzkzMDU2LCJleHAiOjIwODAxNTMwNTZ9.3PK2meYhQpHE5TSpRC8TP7owHpBfCFXsrTTOuNCtgbc"
+            },
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "session_id",
+              "value": "={{$json.session_id}}"
+            },
+            {
+              "name": "tenant_id",
+              "value": "={{$json.tenant_id}}"
+            },
+            {
+              "name": "short_term_memory",
+              "value": "={{JSON.stringify($json.short_term_memory)}}"
+            },
+            {
+              "name": "long_term_memory",
+              "value": "={{JSON.stringify($json.long_term_memory)}}"
+            },
+            {
+              "name": "message_count",
+              "value": "={{$json.message_count}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "save-memory",
+      "name": "Sauvegarder Mémoire",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1450, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"response\": $json.aiResponse, \"success\": true } }}"
+      },
+      "id": "respond-webhook",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1650, 300]
+    }
+  ],
+  "connections": {
+    "Chat Trigger": {
+      "main": [
+        [
+          {
+            "node": "Extract Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Input": {
+      "main": [
+        [
+          {
+            "node": "Charger Mémoire",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Charger Mémoire": {
+      "main": [
+        [
+          {
+            "node": "Préparer Contexte Enrichi",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Préparer Contexte Enrichi": {
+      "main": [
+        [
+          {
+            "node": "OpenAI GPT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI GPT": {
+      "main": [
+        [
+          {
+            "node": "Préparer Sauvegarde Mémoire",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Préparer Sauvegarde Mémoire": {
+      "main": [
+        [
+          {
+            "node": "Sauvegarder Mémoire",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sauvegarder Mémoire": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {},
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2025-12-08T12:00:00.000Z",
+  "versionId": "1"
+}

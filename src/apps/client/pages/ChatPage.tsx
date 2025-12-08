@@ -80,7 +80,10 @@ const ChatPage = () => {
   const { uploadMedia, isUploading } = useMediaUpload();
 
   const handleSendMedia = async (file: File, type: 'image' | 'video' | 'audio') => {
+    console.log('📤 handleSendMedia called:', { fileName: file.name, fileSize: file.size, type });
+
     if (!conversation?.id) {
+      console.error('❌ No active conversation');
       toast({
         title: 'Erreur',
         description: 'Aucune conversation active',
@@ -89,20 +92,43 @@ const ChatPage = () => {
       return;
     }
 
-    const mediaUrl = await uploadMedia(file, conversation.id);
-    if (mediaUrl) {
-      // Send the media URL as a message
-      const mediaMessage = type === 'image'
-        ? `📷 Image: ${mediaUrl}`
-        : type === 'video'
-        ? `🎥 Vidéo: ${mediaUrl}`
-        : `🎤 Audio: ${mediaUrl}`;
+    console.log('✅ Conversation ID:', conversation.id);
+    console.log('🔄 Starting upload...');
 
-      await sendMessage(mediaMessage);
-    } else {
+    try {
+      const mediaUrl = await uploadMedia(file, conversation.id);
+      console.log('📥 Upload result:', mediaUrl);
+
+      if (mediaUrl) {
+        // Format the message with type information
+        const mediaMessage = type === 'image'
+          ? `📷 Image: ${mediaUrl}`
+          : type === 'video'
+          ? `🎥 Vidéo: ${mediaUrl}`
+          : `🎤 Audio: ${mediaUrl}`;
+
+        console.log('📨 Sending media message with type:', type);
+
+        // Send message with the correct media type
+        await sendMessage(mediaMessage, type);
+
+        toast({
+          title: 'Succès',
+          description: 'Fichier envoyé avec succès',
+        });
+      } else {
+        console.error('❌ Upload returned null/undefined');
+        toast({
+          title: 'Erreur',
+          description: 'Impossible d\'uploader le fichier',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      console.error('❌ Upload error:', error);
       toast({
         title: 'Erreur',
-        description: 'Impossible d\'uploader le fichier',
+        description: error instanceof Error ? error.message : 'Erreur d\'upload',
         variant: 'destructive',
       });
     }
