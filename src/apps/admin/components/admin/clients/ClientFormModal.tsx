@@ -340,48 +340,62 @@ const ClientFormModal = ({ clientId, onClose }: ClientFormModalProps) => {
 
       // 3. Create or update tenant using admin service
       if (!clientId) {
-        // Creating new tenant with credentials
+        // Creating new tenant with Supabase Auth
         toast({
           title: "Création du client...",
           description: "Configuration des paramètres et credentials",
         });
 
-        // Use SQL function to create tenant with auth
-        const { data: credentialsData, error: credsError } = await supabaseAdmin.rpc(
-          'create_tenant_with_credentials',
-          {
-            p_slug: formData.slug,
-            p_name: formData.name,
-            p_email: formData.ownerEmail,
-            p_password: formData.autoGeneratePassword ? null : formData.ownerPassword,
-            p_plan_id: formData.planId || null,
-          }
-        );
+        // Generate password if needed
+        const password = formData.autoGeneratePassword
+          ? Math.random().toString(36).slice(-12) + Math.random().toString(36).slice(-12).toUpperCase()
+          : formData.ownerPassword;
 
-        if (credsError) {
-          throw new Error(`Erreur création credentials: ${credsError.message}`);
-        }
-
-        tenantId = credentialsData[0].tenant_id;
-
-        // Show generated password if auto-generated
-        if (formData.autoGeneratePassword && credentialsData[0].generated_password) {
-          toast({
-            title: "🔐 Credentials générés",
-            description: `Email: ${credentialsData[0].email}\nMot de passe: ${credentialsData[0].generated_password}\n\n⚠️ Notez ces informations ! Le mot de passe ne sera plus affiché.`,
-            duration: 15000,
-          });
-        }
-
-        // Now update branding and AI config
-        const result = await updateTenantConfig(tenantId, {
+        // 1. Create tenant first
+        const result = await createTenant({
+          slug: formData.slug,
+          name: formData.name,
+          status: formData.status,
           branding,
           ai_config: aiConfig,
         });
 
         if (!result.success) {
-          throw new Error(result.error || 'Erreur lors de la configuration');
+          throw new Error(result.error || 'Erreur lors de la création du client');
         }
+
+        tenantId = result.tenant!.id;
+
+        // 2. Create Supabase Auth user with admin API
+        const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+          email: formData.ownerEmail,
+          password: password,
+          email_confirm: true, // Auto-confirm email
+          user_metadata: {
+            tenant_id: tenantId,
+            tenant_slug: formData.slug,
+            tenant_name: formData.name,
+          },
+        });
+
+        if (authError) {
+          // Rollback: delete tenant if user creation failed
+          await supabaseAdmin.from('tenants').delete().eq('id', tenantId);
+          throw new Error(`Erreur création utilisateur: ${authError.message}`);
+        }
+
+        // 3. Link tenant to auth user
+        await supabaseAdmin
+          .from('tenants')
+          .update({ owner_id: authData.user.id })
+          .eq('id', tenantId);
+
+        // Show credentials
+        toast({
+          title: "✅ Client créé avec succès",
+          description: `Email: ${formData.ownerEmail}\nMot de passe: ${password}\n\n⚠️ Notez ces informations ! Le mot de passe ne sera plus affiché.`,
+          duration: 15000,
+        });
       } else {
         // Updating existing tenant
         toast({

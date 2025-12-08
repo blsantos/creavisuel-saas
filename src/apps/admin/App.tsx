@@ -11,6 +11,7 @@ import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Tools from "./pages/Tools";
 import Admin from "./pages/Admin";
+import ClientDetailPage from "./components/admin/clients/ClientDetailPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +30,7 @@ const App = () => (
             <Route path="/contact" element={<Contact />} />
             <Route path="/tools" element={<Tools />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/admin/clients/:clientId" element={<ClientDetailPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </TooltipProvider>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { Button } from "../../ui/button";
@@ -25,14 +26,20 @@ interface Tenant {
 }
 
 interface ClientListViewProps {
-  onEditClient: (clientId: string) => void;
+  onEditClient: (clientId: string) => void; // Kept for backward compatibility, but will be deprecated
 }
 
 const ClientListView = ({ onEditClient }: ClientListViewProps) => {
+  const navigate = useNavigate();
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
+
+  const handleEditClient = (clientId: string) => {
+    // Navigate to detail page instead of opening modal
+    navigate(`/admin/clients/${clientId}`);
+  };
 
   useEffect(() => {
     fetchTenants();
@@ -233,7 +240,7 @@ const ClientListView = ({ onEditClient }: ClientListViewProps) => {
                       Voir le site
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => onEditClient(tenant.id)}
+                      onClick={() => handleEditClient(tenant.id)}
                       className="text-slate-300 hover:text-white"
                     >
                       <Edit className="w-4 h-4 mr-2" />
@@ -278,7 +285,7 @@ const ClientListView = ({ onEditClient }: ClientListViewProps) => {
               {/* Quick Actions */}
               <div className="mt-4 pt-4 border-t border-white/10 flex gap-2">
                 <Button
-                  onClick={() => onEditClient(tenant.id)}
+                  onClick={() => handleEditClient(tenant.id)}
                   size="sm"
                   className="flex-1 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30"
                 >

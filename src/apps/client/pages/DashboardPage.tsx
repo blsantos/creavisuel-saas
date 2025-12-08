@@ -7,12 +7,14 @@ import { useAuth } from '@/shared/contexts/AuthContext';
 import { Card, CardHeader, CardTitle, CardContent } from '@/shared/components/ui/card';
 import { Button } from '@/shared/components/ui/button';
 import { Badge } from '@/shared/components/ui/badge';
-import { MessageSquare, Image, Sparkles, TrendingUp, FileText, Clock, LogOut } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
+import { MessageSquare, Image, Sparkles, TrendingUp, FileText, Clock, LogOut, CreditCard } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/shared/lib/supabase';
 import { toast } from '@/shared/hooks/use-toast';
+import BillingSection from '../components/BillingSection';
 
 const DashboardPage = () => {
   const navigate = useNavigate();
@@ -233,8 +235,23 @@ const DashboardPage = () => {
           </motion.div>
         </div>
 
-        {/* Quick Actions */}
-        <div className="grid md:grid-cols-3 gap-6 mb-6">
+        {/* Main Content with Tabs */}
+        <Tabs defaultValue="overview" className="mb-6">
+          <TabsList className="glass-card mb-6">
+            <TabsTrigger value="overview" className="data-[state=active]:bg-cyan-500/20">
+              <TrendingUp className="w-4 h-4 mr-2" />
+              Vue d'ensemble
+            </TabsTrigger>
+            <TabsTrigger value="billing" className="data-[state=active]:bg-cyan-500/20">
+              <CreditCard className="w-4 h-4 mr-2" />
+              Facturation
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Overview Tab */}
+          <TabsContent value="overview" className="space-y-6">
+            {/* Quick Actions */}
+            <div className="grid md:grid-cols-3 gap-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -311,61 +328,68 @@ const DashboardPage = () => {
           </motion.div>
         </div>
 
-        {/* Recent Activity */}
-        <Card className="glass-card">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
-              <Clock className="w-5 h-5 text-cyan-400" />
-              Activité Récente
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {recentActivity.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-slate-400">Aucune activité récente</p>
-                <Button
-                  onClick={() => navigate('/chat')}
-                  className="mt-4 bg-gradient-to-r from-cyan-500 to-purple-500"
-                >
-                  <MessageSquare className="w-4 h-4 mr-2" />
-                  Commencer une conversation
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {recentActivity.map((conv, idx) => (
-                  <motion.div
-                    key={conv.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: idx * 0.1 }}
-                    className="flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors cursor-pointer"
-                    onClick={() => navigate('/chat')}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded bg-cyan-500/20">
-                        <MessageSquare className="w-4 h-4 text-cyan-400" />
-                      </div>
-                      <div>
-                        <p className="text-white font-medium">
-                          {conv.title || 'Conversation sans titre'}
-                        </p>
-                        <p className="text-xs text-slate-400">
-                          {new Date(conv.updated_at || conv.created_at).toLocaleDateString('fr-FR', {
-                            day: 'numeric',
-                            month: 'long',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </p>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+            {/* Recent Activity */}
+            <Card className="glass-card">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-cyan-400" />
+                  Activité Récente
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {recentActivity.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-slate-400">Aucune activité récente</p>
+                    <Button
+                      onClick={() => navigate('/chat')}
+                      className="mt-4 bg-gradient-to-r from-cyan-500 to-purple-500"
+                    >
+                      <MessageSquare className="w-4 h-4 mr-2" />
+                      Commencer une conversation
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {recentActivity.map((conv, idx) => (
+                      <motion.div
+                        key={conv.id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: idx * 0.1 }}
+                        className="flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors cursor-pointer"
+                        onClick={() => navigate('/chat')}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded bg-cyan-500/20">
+                            <MessageSquare className="w-4 h-4 text-cyan-400" />
+                          </div>
+                          <div>
+                            <p className="text-white font-medium">
+                              {conv.title || 'Conversation sans titre'}
+                            </p>
+                            <p className="text-xs text-slate-400">
+                              {new Date(conv.updated_at || conv.created_at).toLocaleDateString('fr-FR', {
+                                day: 'numeric',
+                                month: 'long',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </p>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Billing Tab */}
+          <TabsContent value="billing">
+            <BillingSection />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
