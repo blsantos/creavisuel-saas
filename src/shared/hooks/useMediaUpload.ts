@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
-import { supabase, isSupabaseConfigured } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { supabase, isSupabaseConfigured } from '@/shared/integrations/supabase/client';
+import { useAuth } from '@/shared/contexts/AuthContext';
 
 export const useMediaUpload = () => {
   const [isUploading, setIsUploading] = useState(false);

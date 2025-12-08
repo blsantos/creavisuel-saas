@@ -1,8 +1,9 @@
 import { useTenant, useBranding, useAIConfig } from '@/shared/contexts/TenantContext';
 import { useChatWithSupabase } from '@/shared/hooks/useChatWithSupabase';
+import { useMediaUpload } from '@/shared/hooks/useMediaUpload';
 import { ChatInput } from '../components/ChatInput';
 import { Button } from '@/shared/components/ui/button';
-import { ArrowLeft, Trash2, Share2, Brain, Download } from 'lucide-react';
+import { ArrowLeft, Trash2, Share2, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
@@ -23,7 +24,6 @@ const ChatPage = () => {
   const aiConfig = useAIConfig();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [showShareDialog, setShowShareDialog] = useState(false);
-  const [showRAGDialog, setShowRAGDialog] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
   const webhookUrl = aiConfig?.webhookUrl || '';
@@ -67,6 +67,7 @@ const ChatPage = () => {
 
   const {
     messages,
+    conversation,
     isLoading,
     isFetchingHistory,
     sendMessage,
@@ -75,6 +76,37 @@ const ChatPage = () => {
     webhookUrl,
     aiConfig,
   });
+
+  const { uploadMedia, isUploading } = useMediaUpload();
+
+  const handleSendMedia = async (file: File, type: 'image' | 'video' | 'audio') => {
+    if (!conversation?.id) {
+      toast({
+        title: 'Erreur',
+        description: 'Aucune conversation active',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const mediaUrl = await uploadMedia(file, conversation.id);
+    if (mediaUrl) {
+      // Send the media URL as a message
+      const mediaMessage = type === 'image'
+        ? `📷 Image: ${mediaUrl}`
+        : type === 'video'
+        ? `🎥 Vidéo: ${mediaUrl}`
+        : `🎤 Audio: ${mediaUrl}`;
+
+      await sendMessage(mediaMessage);
+    } else {
+      toast({
+        title: 'Erreur',
+        description: 'Impossible d\'uploader le fichier',
+        variant: 'destructive',
+      });
+    }
+  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -127,7 +159,8 @@ const ChatPage = () => {
               <Download className="w-5 h-5" />
             </Button>
 
-            <Dialog open={showRAGDialog} onOpenChange={setShowRAGDialog}>
+            {/* RAG Feature - Coming Soon - Hidden for now */}
+            {/* <Dialog open={showRAGDialog} onOpenChange={setShowRAGDialog}>
               <DialogTrigger asChild>
                 <Button
                   variant="ghost"
@@ -160,7 +193,7 @@ const ChatPage = () => {
                   </ul>
                 </div>
               </DialogContent>
-            </Dialog>
+            </Dialog> */}
 
             <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
               <DialogTrigger asChild>
@@ -301,7 +334,31 @@ const ChatPage = () => {
                     : 'glass-card text-white rounded-bl-sm'
                 }`}
               >
-                <p className="whitespace-pre-wrap">{message.content}</p>
+                {/* Detect and display images from URLs */}
+                {(() => {
+                  const imageUrlMatch = message.content.match(/(https?:\/\/[^\s]+\.(?:jpg|jpeg|png|gif|webp)(?:\?[^\s]*)?)/i);
+                  if (imageUrlMatch) {
+                    const imageUrl = imageUrlMatch[1];
+                    const textWithoutUrl = message.content.replace(imageUrl, '').trim();
+                    return (
+                      <>
+                        {textWithoutUrl && <p className="whitespace-pre-wrap mb-3">{textWithoutUrl}</p>}
+                        <img
+                          src={imageUrl}
+                          alt="Generated content"
+                          className="rounded-lg max-w-full h-auto"
+                          onError={(e) => {
+                            // If image fails to load, show URL as fallback
+                            e.currentTarget.style.display = 'none';
+                            e.currentTarget.nextElementSibling!.classList.remove('hidden');
+                          }}
+                        />
+                        <p className="text-xs text-cyan-400 mt-2 hidden">{imageUrl}</p>
+                      </>
+                    );
+                  }
+                  return <p className="whitespace-pre-wrap">{message.content}</p>;
+                })()}
                 <p className="text-xs text-slate-400 mt-2">
                   {new Date(message.created_at).toLocaleTimeString('fr-FR', {
                     hour: '2-digit',
@@ -357,8 +414,8 @@ const ChatPage = () => {
         <div className="max-w-4xl mx-auto">
           <ChatInput
             onSendText={sendMessage}
-            onSendMedia={() => {}}
-            isLoading={isLoading}
+            onSendMedia={handleSendMedia}
+            isLoading={isLoading || isUploading}
             placeholder="Écrivez votre message..."
           />
         </div>
