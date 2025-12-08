@@ -1,0 +1,267 @@
+/* GrapesJS Custom Styles for CréaVisuel Admin */
+
+.gjs-editor-container {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Panels */
+.gjs-pn-panel {
+  padding: 0;
+}
+
+.gjs-pn-views-container {
+  padding: 0;
+}
+
+/* Blocks */
+.gjs-block {
+  width: calc(50% - 5px);
+  min-height: 65px;
+  margin: 2px;
+  padding: 5px;
+  border-radius: 8px;
+  background-color: #3a3a3a;
+  border: 1px solid #4a4a4a;
+  transition: all 0.2s ease;
+}
+
+.gjs-block:hover {
+  background-color: #4a4a4a;
+  border-color: #8b5cf6;
+}
+
+.gjs-block-label {
+  font-size: 11px;
+  color: #e0e0e0;
+}
+
+.gjs-block svg {
+  fill: #8b5cf6;
+}
+
+/* Block Categories */
+.gjs-block-category {
+  background-color: #2a2a2a;
+}
+
+.gjs-block-category .gjs-title {
+  background-color: #333;
+  border-bottom: 1px solid #4a4a4a;
+  color: #fff;
+  padding: 10px;
+  font-weight: 600;
+}
+
+.gjs-block-category.gjs-open .gjs-title {
+  border-bottom: 1px solid #8b5cf6;
+}
+
+/* Style Manager */
+.gjs-sm-sector {
+  border-bottom: 1px solid #3a3a3a;
+}
+
+.gjs-sm-sector-title {
+  background-color: #333;
+  color: #fff;
+  padding: 10px;
+  font-weight: 500;
+}
+
+.gjs-sm-properties {
+  padding: 10px;
+  background-color: #2a2a2a;
+}
+
+.gjs-sm-label {
+  color: #aaa;
+  font-size: 11px;
+}
+
+.gjs-field {
+  background-color: #3a3a3a;
+  border: 1px solid #4a4a4a;
+  border-radius: 4px;
+  color: #fff;
+}
+
+.gjs-field:focus {
+  border-color: #8b5cf6;
+}
+
+.gjs-field input,
+.gjs-field select {
+  color: #fff;
+}
+
+/* Layer Manager */
+.gjs-layer {
+  background-color: #333;
+  border-bottom: 1px solid #3a3a3a;
+}
+
+.gjs-layer:hover {
+  background-color: #3a3a3a;
+}
+
+.gjs-layer-title {
+  color: #e0e0e0;
+}
+
+.gjs-layer.gjs-selected {
+  background-color: #8b5cf6;
+}
+
+/* Selector Manager */
+.gjs-clm-tags {
+  padding: 5px;
+}
+
+.gjs-clm-tag {
+  background-color: #8b5cf6;
+  border-radius: 4px;
+  padding: 3px 8px;
+  margin: 2px;
+}
+
+/* Trait Manager */
+.gjs-trt-trait {
+  padding: 8px 10px;
+  border-bottom: 1px solid #3a3a3a;
+}
+
+.gjs-trt-trait__wrp-label {
+  color: #aaa;
+  font-size: 11px;
+}
+
+/* Canvas Frame */
+.gjs-frame-wrapper {
+  background-color: #1a1a1a;
+}
+
+/* Toolbar */
+.gjs-toolbar {
+  background-color: #2a2a2a;
+  border: 1px solid #4a4a4a;
+  border-radius: 8px;
+  padding: 4px;
+}
+
+.gjs-toolbar-item {
+  color: #fff;
+  padding: 6px;
+  border-radius: 4px;
+}
+
+.gjs-toolbar-item:hover {
+  background-color: #8b5cf6;
+}
+
+/* Highlighter */
+.gjs-highlighter {
+  outline: 2px solid #8b5cf6 !important;
+}
+
+/* Badge */
+.gjs-badge {
+  background-color: #8b5cf6;
+  color: #fff;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 10px;
+}
+
+/* Resizer */
+.gjs-resizer-h {
+  border-color: #8b5cf6;
+  background-color: #8b5cf6;
+}
+
+/* Button styling */
+.gjs-btn-prim {
+  background-color: #8b5cf6;
+  border-radius: 6px;
+  padding: 8px 16px;
+  color: white;
+  border: none;
+}
+
+.gjs-btn-prim:hover {
+  background-color: #7c3aed;
+}
+
+/* Four Resizer */
+.gjs-resizer {
+  background-color: #8b5cf6;
+}
+
+/* Component selection */
+.gjs-selected {
+  outline: 2px solid #8b5cf6 !important;
+}
+
+/* RTE */
+.gjs-rte-toolbar {
+  background-color: #2a2a2a;
+  border: 1px solid #4a4a4a;
+  border-radius: 8px;
+}
+
+.gjs-rte-action {
+  color: #fff;
+}
+
+.gjs-rte-action:hover {
+  background-color: #8b5cf6;
+}
+
+/* Device buttons */
+.gjs-pn-devices-c {
+  padding: 4px;
+}
+
+.gjs-pn-btn {
+  color: #aaa;
+  padding: 8px;
+  border-radius: 4px;
+}
+
+.gjs-pn-btn:hover {
+  color: #fff;
+  background-color: #3a3a3a;
+}
+
+.gjs-pn-btn.gjs-pn-active {
+  color: #fff;
+  background-color: #8b5cf6;
+}
+
+/* Input colors */
+.gjs-color-input {
+  background-color: #3a3a3a;
+}
+
+/* Radio/Checkbox */
+.gjs-radio-item input:checked + .gjs-radio-item-label {
+  background-color: #8b5cf6;
+}
+
+/* Scrollbar styling */
+.gjs-editor-container ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.gjs-editor-container ::-webkit-scrollbar-track {
+  background: #2a2a2a;
+}
+
+.gjs-editor-container ::-webkit-scrollbar-thumb {
+  background: #4a4a4a;
+  border-radius: 4px;
+}
+
+.gjs-editor-container ::-webkit-scrollbar-thumb:hover {
+  background: #5a5a5a;
+}

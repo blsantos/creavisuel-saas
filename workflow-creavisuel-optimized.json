@@ -1,0 +1,235 @@
+{
+  "name": "CréaVisuel SaaS - Chat IA Multi-Tenant (Optimisé)",
+  "nodes": [
+    {
+      "parameters": {
+        "public": true,
+        "options": {
+          "allowedOrigins": "*",
+          "responseMode": "responseNode"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [-720, -224],
+      "id": "chat-trigger",
+      "name": "When chat message received",
+      "webhookId": "VOTRE-WEBHOOK-ID-ICI"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {"name": "sessionId", "value": "={{ $json.sessionId }}", "type": "string"},
+            {"name": "chatInput", "value": "={{ $json.chatInput || $json.message }}", "type": "string"},
+            {"name": "conversationHistory", "value": "={{ $json.conversationHistory }}", "type": "object"},
+            {"name": "tenant.id", "value": "={{ $json.tenant.id }}", "type": "string"},
+            {"name": "tenant.name", "value": "={{ $json.tenant.name }}", "type": "string"},
+            {"name": "tenant.slug", "value": "={{ $json.tenant.slug }}", "type": "string"},
+            {"name": "tenant.aiConfig.systemPrompt", "value": "={{ $json.tenant.aiConfig.systemPrompt }}", "type": "string"},
+            {"name": "tenant.aiConfig.tone", "value": "={{ $json.tenant.aiConfig.tone }}", "type": "string"},
+            {"name": "tenant.aiConfig.model", "value": "={{ $json.tenant.aiConfig.model }}", "type": "string"}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-496, -224],
+      "id": "chat-inputs",
+      "name": "Chat-inputs"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://supabase.lecoach.digital/rest/v1/n8n_conversations?conversation_id=eq.{{ $json.sessionId }}&order=created_at.desc&limit=1",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-272, -224],
+      "id": "load-session-supabase",
+      "name": "Charger Session Supabase",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "SUPABASE_AUTH_CREDENTIAL_ID",
+          "name": "Supabase Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const inputs = $('Chat-inputs').first().json;\nconst sessionData = $input.all();\n\n// Extraire la mémoire longue de Supabase\nlet memoireLongue = '';\nif (sessionData && sessionData.length > 0 && sessionData[0].json) {\n  const dbData = sessionData[0].json;\n  if (Array.isArray(dbData) && dbData.length > 0) {\n    memoireLongue = dbData[0].memory_data || '';\n  }\n}\n\n// Construire l'historique textuel\nconst history = inputs.conversationHistory || [];\nlet historyText = '';\nif (history.length > 0) {\n  historyText = '\\n📝 HISTORIQUE RÉCENT:\\n';\n  history.forEach(msg => {\n    const role = msg.role === 'user' ? '👤 User' : '🤖 Assistant';\n    historyText += `${role}: ${msg.content}\\n`;\n  });\n}\n\nreturn {\n  json: {\n    sessionId: inputs.sessionId,\n    chatInput: inputs.chatInput,\n    systemPrompt: inputs['tenant.aiConfig.systemPrompt'],\n    tone: inputs['tenant.aiConfig.tone'] || 'professional',\n    model: inputs['tenant.aiConfig.model'] || 'gpt-4o-mini',\n    tenantId: inputs['tenant.id'],\n    tenantName: inputs['tenant.name'],\n    tenantSlug: inputs['tenant.slug'],\n    memoireLongue: memoireLongue,\n    historyText: historyText\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-48, -224],
+      "id": "prepare-context",
+      "name": "Préparer Contexte"
+    },
+    {
+      "parameters": {
+        "jsCode": "const context = $('Préparer Contexte').first().json;\n\nconst systemPrompt = context.systemPrompt || 'Tu es un assistant IA professionnel et serviable.';\nconst tone = context.tone || 'professional';\n\n// Instructions de ton dynamiques\nlet toneInstructions = '';\nswitch(tone) {\n  case 'friendly':\n    toneInstructions = '\\n💬 TON: Amical, chaleureux et accessible. Utilise un langage naturel et empathique.';\n    break;\n  case 'professional':\n    toneInstructions = '\\n💼 TON: Professionnel, courtois et précis. Reste formel mais accessible.';\n    break;\n  case 'expert':\n    toneInstructions = '\\n🎓 TON: Expert et technique. Fournis des réponses détaillées et précises.';\n    break;\n  case 'casual':\n    toneInstructions = '\\n😊 TON: Décontracté et simple. Parle comme à un ami.';\n    break;\n  default:\n    toneInstructions = '\\n💬 TON: Adapté et professionnel.';\n}\n\n// Construire le prompt final\nconst finalPrompt = `${systemPrompt}\n${toneInstructions}\n\n📊 CONTEXTE DE LA SESSION:\n${context.memoireLongue || 'Aucune mémoire longue disponible.'}\n${context.historyText || ''}\n\n💬 MESSAGE UTILISATEUR:\n${context.chatInput}\n\n📋 INSTRUCTIONS:\n- Réponds de manière cohérente avec le contexte et l'historique\n- Utilise le ton spécifié ci-dessus\n- Sois concis mais complet\n- Si tu ne sais pas, dis-le honnêtement`;\n\nreturn {\n  json: {\n    prompt: finalPrompt,\n    sessionId: context.sessionId,\n    tenantId: context.tenantId,\n    tenantSlug: context.tenantSlug,\n    chatInput: context.chatInput,\n    model: context.model\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [176, -224],
+      "id": "build-prompt",
+      "name": "Préparer Prompt Dynamique"
+    },
+    {
+      "parameters": {
+        "operation": "message",
+        "modelId": "={{ $json.model || 'gpt-4o-mini' }}",
+        "messages": {
+          "values": [
+            {
+              "content": "={{ $json.prompt }}"
+            }
+          ]
+        },
+        "options": {
+          "temperature": 0.7,
+          "maxTokens": 2000
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.4,
+      "position": [400, -224],
+      "id": "openai-call",
+      "name": "OpenAI GPT",
+      "credentials": {
+        "openAiApi": {
+          "id": "OPENAI_CREDENTIAL_ID",
+          "name": "OpenAI API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "Response",
+              "value": "={{ $json.message.content }}",
+              "type": "string"
+            },
+            {
+              "name": "model",
+              "value": "={{ $('Préparer Prompt Dynamique').first().json.model }}",
+              "type": "string"
+            },
+            {
+              "name": "sessionId",
+              "value": "={{ $('Préparer Prompt Dynamique').first().json.sessionId }}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [624, -224],
+      "id": "format-response",
+      "name": "Formater Réponse"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://supabase.lecoach.digital/rest/v1/n8n_conversations",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "conversation_id",
+              "value": "={{ $json.sessionId }}"
+            },
+            {
+              "name": "memory_data",
+              "value": "={{ $json.Response }}"
+            },
+            {
+              "name": "tenant_id",
+              "value": "={{ $('Préparer Contexte').first().json.tenantId }}"
+            }
+          ]
+        },
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [624, -24],
+      "id": "save-to-supabase",
+      "name": "Sauvegarder dans Supabase",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "SUPABASE_AUTH_CREDENTIAL_ID",
+          "name": "Supabase Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}"
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [848, -224],
+      "id": "respond-to-webhook",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "connections": {
+    "When chat message received": {
+      "main": [[{"node": "Chat-inputs", "type": "main", "index": 0}]]
+    },
+    "Chat-inputs": {
+      "main": [[{"node": "Charger Session Supabase", "type": "main", "index": 0}]]
+    },
+    "Charger Session Supabase": {
+      "main": [[{"node": "Préparer Contexte", "type": "main", "index": 0}]]
+    },
+    "Préparer Contexte": {
+      "main": [[{"node": "Préparer Prompt Dynamique", "type": "main", "index": 0}]]
+    },
+    "Préparer Prompt Dynamique": {
+      "main": [[{"node": "OpenAI GPT", "type": "main", "index": 0}]]
+    },
+    "OpenAI GPT": {
+      "main": [[
+        {"node": "Formater Réponse", "type": "main", "index": 0}
+      ]]
+    },
+    "Formater Réponse": {
+      "main": [
+        [
+          {"node": "Respond to Webhook", "type": "main", "index": 0},
+          {"node": "Sauvegarder dans Supabase", "type": "main", "index": 0}
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2025-12-08T00:00:00.000Z",
+  "versionId": "1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "VOTRE-N8N-INSTANCE-ID"
+  }
+}

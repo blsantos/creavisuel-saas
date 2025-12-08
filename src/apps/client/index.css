@@ -1,0 +1,312 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* Dark Theme (default) - CréaVisuel colors: Navy, Cyan, Green */
+  :root, .dark {
+    --background: 210 55% 8%;
+    --foreground: 210 20% 95%;
+
+    --card: 210 45% 12%;
+    --card-foreground: 210 20% 95%;
+
+    --popover: 210 45% 12%;
+    --popover-foreground: 210 20% 95%;
+
+    --primary: 187 100% 42%;
+    --primary-foreground: 210 55% 8%;
+
+    --secondary: 210 40% 18%;
+    --secondary-foreground: 210 20% 95%;
+
+    --muted: 210 35% 15%;
+    --muted-foreground: 210 15% 55%;
+
+    --accent: 87 50% 48%;
+    --accent-foreground: 210 55% 8%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 210 20% 98%;
+
+    --border: 210 35% 22%;
+    --input: 210 35% 15%;
+    --ring: 187 100% 42%;
+
+    --radius: 1rem;
+
+    /* Chat colors */
+    --chat-sent: 187 100% 42%;
+    --chat-sent-foreground: 0 0% 0%;
+    --chat-received: 210 40% 25%;
+    --chat-received-foreground: 210 20% 98%;
+    
+    /* Status colors */
+    --success: 87 50% 48%;
+    --success-foreground: 210 55% 8%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 210 55% 8%;
+    
+    /* Teal */
+    --teal: 187 100% 42%;
+    --teal-foreground: 210 55% 8%;
+    
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(187 100% 42%), hsl(187 100% 52%));
+    --gradient-dark: linear-gradient(180deg, hsl(210 55% 6%), hsl(210 55% 10%));
+    --gradient-card: linear-gradient(145deg, hsl(210 45% 14%), hsl(210 45% 10%));
+    --gradient-accent: linear-gradient(135deg, hsl(87 50% 48%), hsl(87 50% 40%));
+    --gradient-glass: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+    
+    /* Shadows */
+    --shadow-glow: 0 0 40px hsl(187 100% 42% / 0.2);
+    --shadow-accent: 0 0 30px hsl(87 50% 48% / 0.15);
+    --shadow-card: 0 8px 32px hsl(0 0% 0% / 0.4);
+    --shadow-message: 0 4px 20px hsl(0 0% 0% / 0.3);
+    
+    /* Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    --sidebar-background: 210 55% 8%;
+    --sidebar-foreground: 210 20% 95%;
+    --sidebar-primary: 187 100% 42%;
+    --sidebar-primary-foreground: 210 55% 8%;
+    --sidebar-accent: 210 40% 18%;
+    --sidebar-accent-foreground: 210 20% 95%;
+    --sidebar-border: 210 35% 22%;
+    --sidebar-ring: 187 100% 42%;
+  }
+
+  /* Light Theme - CréaVisuel colors */
+  .light {
+    --background: 210 30% 98%;
+    --foreground: 210 55% 23%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 210 55% 23%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 210 55% 23%;
+
+    --primary: 187 100% 38%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 210 20% 94%;
+    --secondary-foreground: 210 55% 23%;
+
+    --muted: 210 20% 92%;
+    --muted-foreground: 210 20% 45%;
+
+    --accent: 87 50% 42%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 210 20% 88%;
+    --input: 210 20% 94%;
+    --ring: 187 100% 38%;
+
+    /* Chat colors - light mode */
+    --chat-sent: 187 100% 38%;
+    --chat-sent-foreground: 0 0% 100%;
+    --chat-received: 210 20% 95%;
+    --chat-received-foreground: 210 55% 23%;
+    
+    /* Status colors */
+    --success: 87 50% 42%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 210 55% 23%;
+    
+    /* Teal */
+    --teal: 187 100% 38%;
+    --teal-foreground: 0 0% 100%;
+    
+    /* Gradients - light mode */
+    --gradient-primary: linear-gradient(135deg, hsl(187 100% 38%), hsl(187 100% 48%));
+    --gradient-dark: linear-gradient(180deg, hsl(210 30% 97%), hsl(210 30% 99%));
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(210 20% 98%));
+    --gradient-accent: linear-gradient(135deg, hsl(87 50% 42%), hsl(87 50% 52%));
+    --gradient-glass: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7));
+    
+    /* Shadows - light mode */
+    --shadow-glow: 0 0 40px hsl(187 100% 38% / 0.15);
+    --shadow-accent: 0 0 30px hsl(87 50% 42% / 0.1);
+    --shadow-card: 0 8px 32px hsl(210 30% 50% / 0.08);
+    --shadow-message: 0 4px 20px hsl(210 30% 50% / 0.1);
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 210 55% 23%;
+    --sidebar-primary: 187 100% 38%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 20% 94%;
+    --sidebar-accent-foreground: 210 55% 23%;
+    --sidebar-border: 210 20% 88%;
+    --sidebar-ring: 187 100% 38%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  
+  .dark body {
+    background: var(--gradient-dark);
+  }
+}
+
+@layer utilities {
+  /* Glassmorphism */
+  .glass {
+    @apply bg-card/70 backdrop-blur-xl border border-border/50;
+    background: var(--gradient-glass);
+  }
+  
+  .glass-strong {
+    @apply bg-card/85 backdrop-blur-2xl border border-border/60;
+  }
+  
+  /* Messages */
+  .message-sent {
+    @apply text-[hsl(var(--chat-sent-foreground))];
+    background: linear-gradient(135deg, hsl(var(--chat-sent)), hsl(var(--chat-sent) / 0.9));
+    box-shadow: var(--shadow-message);
+  }
+  
+  .message-received {
+    @apply bg-[hsl(var(--chat-received))] text-[hsl(var(--chat-received-foreground))];
+    box-shadow: var(--shadow-message);
+  }
+  
+  /* Glows */
+  .glow-primary {
+    box-shadow: var(--shadow-glow);
+  }
+  
+  .glow-accent {
+    box-shadow: var(--shadow-accent);
+  }
+  
+  /* Animations */
+  .animate-pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+  
+  @keyframes pulse-glow {
+    0%, 100% {
+      box-shadow: 0 0 20px hsl(var(--primary) / 0.3);
+    }
+    50% {
+      box-shadow: 0 0 40px hsl(var(--primary) / 0.5);
+    }
+  }
+  
+  @keyframes message-in {
+    from {
+      opacity: 0;
+      transform: translateY(12px) scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+  
+  .animate-message-in {
+    animation: message-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+  
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+  
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  
+  .animate-shimmer {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--muted)) 0%,
+      hsl(var(--muted-foreground) / 0.1) 50%,
+      hsl(var(--muted)) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+  
+  @keyframes recording-pulse {
+    0%, 100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    50% {
+      transform: scale(1.1);
+      opacity: 0.8;
+    }
+  }
+  
+  .animate-recording {
+    animation: recording-pulse 1s ease-in-out infinite;
+  }
+  
+  @keyframes spin-slow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  
+  .animate-spin-slow {
+    animation: spin-slow 3s linear infinite;
+  }
+  
+  /* Scrollbar */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 3px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground));
+  }
+  
+  /* Image loading placeholder */
+  .image-placeholder {
+    @apply rounded-lg overflow-hidden;
+    background: linear-gradient(
+      110deg,
+      hsl(var(--muted)) 8%,
+      hsl(var(--muted-foreground) / 0.15) 18%,
+      hsl(var(--muted)) 33%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.2s linear infinite;
+  }
+}
