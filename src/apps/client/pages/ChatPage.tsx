@@ -3,7 +3,7 @@ import { useChatWithSupabase } from '@/shared/hooks/useChatWithSupabase';
 import { useMediaUpload } from '@/shared/hooks/useMediaUpload';
 import { ChatInput } from '../components/ChatInput';
 import { Button } from '@/shared/components/ui/button';
-import { ArrowLeft, Trash2, Share2, Download } from 'lucide-react';
+import { ArrowLeft, Trash2, Share2, Download, Image, Video } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
@@ -69,6 +69,7 @@ const ChatPage = () => {
     messages,
     conversation,
     isLoading,
+    loadingType,
     isFetchingHistory,
     sendMessage,
     clearAndStartNew,
@@ -414,11 +415,33 @@ const ChatPage = () => {
                 />
               </div>
               <div className="glass-card p-4 rounded-2xl rounded-tl-sm">
-                <div className="flex gap-1">
-                  <span className="typing-dot"></span>
-                  <span className="typing-dot"></span>
-                  <span className="typing-dot"></span>
-                </div>
+                {loadingType === 'image' ? (
+                  <div className="flex items-center gap-3">
+                    <div className="relative">
+                      <Image className="w-8 h-8 text-cyan-400 image-loading-icon" />
+                      <div className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-400 rounded-full sparkle"></div>
+                      <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-pink-400 rounded-full sparkle"></div>
+                      <div className="absolute top-0 -right-2 w-2 h-2 bg-cyan-400 rounded-full sparkle"></div>
+                      <div className="absolute -bottom-1 right-0 w-2 h-2 bg-purple-400 rounded-full sparkle"></div>
+                    </div>
+                    <div className="text-sm text-slate-300">
+                      Génération de l'image en cours...
+                    </div>
+                  </div>
+                ) : loadingType === 'video' ? (
+                  <div className="flex items-center gap-3">
+                    <Video className="w-8 h-8 text-purple-400 image-loading-icon" />
+                    <div className="text-sm text-slate-300">
+                      Génération de la vidéo en cours...
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex gap-1">
+                    <span className="typing-dot"></span>
+                    <span className="typing-dot"></span>
+                    <span className="typing-dot"></span>
+                  </div>
+                )}
               </div>
             </motion.div>
           )}

@@ -38,6 +38,7 @@ export const useChatWithSupabase = (options: UseChatWithSupabaseOptions = {}) =>
   const [messages, setMessages] = useState<Message[]>([]);
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingType, setLoadingType] = useState<'text' | 'image' | 'video' | 'audio' | 'pdf'>('text');
   const [isFetchingHistory, setIsFetchingHistory] = useState(false);
 
   const conversationId = options.conversationId || conversation?.id;
@@ -322,6 +323,7 @@ export const useChatWithSupabase = (options: UseChatWithSupabaseOptions = {}) =>
       }
 
       setIsLoading(true);
+      setLoadingType(messageType);
 
       try {
         // 1. Save user message with type metadata
@@ -401,6 +403,7 @@ export const useChatWithSupabase = (options: UseChatWithSupabaseOptions = {}) =>
     messages,
     conversation,
     isLoading,
+    loadingType,
     isFetchingHistory,
     sendMessage,
     archiveConversation,
