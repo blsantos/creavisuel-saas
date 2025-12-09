@@ -123,6 +123,62 @@ export const useChatWithSupabase = (options: UseChatWithSupabaseOptions = {}) =>
     }
   };
 
+  // Save AI content to library
+  const saveToContentLibrary = async (content: string, messageMetadata?: Record<string, unknown>) => {
+    if (!tenant?.id || !conversationId) return;
+
+    try {
+      // Detect content type and extract media URLs
+      const imageUrlMatch = content.match(/(https?:\/\/[^\s]+\.(?:jpg|jpeg|png|gif|webp)(?:\?[^\s]*)?)/i);
+      const videoUrlMatch = content.match(/(https?:\/\/[^\s]+\.(?:mp4|mov|avi|webm)(?:\?[^\s]*)?)/i);
+
+      let contentType: 'post' | 'image' | 'video' | 'audio' | 'document' = 'post';
+      let mediaUrl: string | null = null;
+      let textContent = content;
+
+      if (imageUrlMatch) {
+        contentType = 'image';
+        mediaUrl = imageUrlMatch[1];
+        textContent = content.replace(mediaUrl, '').trim();
+      } else if (videoUrlMatch) {
+        contentType = 'video';
+        mediaUrl = videoUrlMatch[1];
+        textContent = content.replace(mediaUrl, '').trim();
+      }
+
+      // Generate title from first 50 chars or use default
+      const title = textContent.length > 0
+        ? textContent.substring(0, 50) + (textContent.length > 50 ? '...' : '')
+        : `Contenu généré ${new Date().toLocaleDateString('fr-FR')}`;
+
+      // Save to content library
+      const { error } = await supabase
+        .from('content_library')
+        .insert({
+          tenant_id: tenant.id,
+          conversation_id: conversationId,
+          type: contentType,
+          title,
+          content: textContent || null,
+          media_url: mediaUrl,
+          metadata: {
+            source: 'ai_chat',
+            ai_model: messageMetadata?.model || 'webhook',
+            timestamp: new Date().toISOString(),
+            ...messageMetadata,
+          },
+        });
+
+      if (error) {
+        console.error('Failed to save to content library:', error);
+      } else {
+        console.log('✅ Content saved to library:', { title, type: contentType });
+      }
+    } catch (error) {
+      console.error('Error saving to content library:', error);
+    }
+  };
+
   // Add message to Supabase
   const addMessage = async (
     role: 'user' | 'assistant' | 'system',
@@ -153,6 +209,12 @@ export const useChatWithSupabase = (options: UseChatWithSupabaseOptions = {}) =>
       if (error) throw error;
 
       setMessages((prev) => [...prev, data]);
+
+      // Save assistant messages to content library automatically
+      if (role === 'assistant' && !metadata?.error) {
+        await saveToContentLibrary(content, metadata);
+      }
+
       return data;
     } catch (error) {
       console.error('Failed to add message:', error);
