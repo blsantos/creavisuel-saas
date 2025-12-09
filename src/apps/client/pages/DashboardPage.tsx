@@ -10,7 +10,7 @@ import { Badge } from '@/shared/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
 import { MessageSquare, Image, Sparkles, TrendingUp, FileText, Clock, LogOut, CreditCard } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/shared/lib/supabase';
 import { toast } from '@/shared/hooks/use-toast';
@@ -21,6 +21,7 @@ const DashboardPage = () => {
   const { tenant } = useTenant();
   const branding = useBranding();
   const { user, signOut } = useAuth();
+  const [activeTab, setActiveTab] = useState('overview');
   const [stats, setStats] = useState({
     conversations: 0,
     messages: 0,
@@ -249,84 +250,84 @@ const DashboardPage = () => {
           </TabsList>
 
           {/* Overview Tab */}
-          <TabsContent value="overview" className="space-y-6">
+          <TabsContent value="overview" className="space-y-6 tab-content-enter">
             {/* Quick Actions */}
             <div className="grid md:grid-cols-3 gap-6">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            <Card
-              className="glass-card p-6 hover-glow-cyan cursor-pointer transition-all duration-300"
-              onClick={() => navigate('/chat')}
-            >
-              <div className="flex items-center gap-4">
-                <motion.div
-                  className="p-3 rounded-lg bg-cyan-500/20"
-                  whileHover={{ scale: 1.1, rotate: 5 }}
-                  transition={{ type: "spring", stiffness: 400 }}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+              >
+                <Card
+                  className="glass-card p-6 hover-glow-cyan cursor-pointer transition-all duration-300 scifi-card-interactive"
+                  onClick={() => navigate('/chat')}
                 >
-                  <MessageSquare className="w-6 h-6 text-cyan-400" />
-                </motion.div>
-                <div>
-                  <h3 className="font-semibold text-white">Chat IA</h3>
-                  <p className="text-sm text-slate-400">Assistant personnalisé</p>
-                </div>
-              </div>
-            </Card>
-          </motion.div>
+                  <div className="flex items-center gap-4">
+                    <motion.div
+                      className="p-3 rounded-lg bg-cyan-500/20"
+                      whileHover={{ scale: 1.1, rotate: 5 }}
+                      transition={{ type: "spring", stiffness: 400 }}
+                    >
+                      <MessageSquare className="w-6 h-6 text-cyan-400" />
+                    </motion.div>
+                    <div>
+                      <h3 className="font-semibold text-white">Chat IA</h3>
+                      <p className="text-sm text-slate-400">Assistant personnalisé</p>
+                    </div>
+                  </div>
+                </Card>
+              </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <Card
-              className="glass-card p-6 hover-glow-purple cursor-pointer transition-all duration-300"
-              onClick={() => navigate('/library')}
-            >
-              <div className="flex items-center gap-4">
-                <motion.div
-                  className="p-3 rounded-lg bg-purple-500/20"
-                  whileHover={{ scale: 1.1, rotate: -5 }}
-                  transition={{ type: "spring", stiffness: 400 }}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                <Card
+                  className="glass-card p-6 hover-glow-purple cursor-pointer transition-all duration-300 scifi-card-interactive"
+                  onClick={() => navigate('/library')}
                 >
-                  <Image className="w-6 h-6 text-purple-400" />
-                </motion.div>
-                <div>
-                  <h3 className="font-semibold text-white">Bibliothèque</h3>
-                  <p className="text-sm text-slate-400">Contenu généré</p>
-                </div>
-              </div>
-            </Card>
-          </motion.div>
+                  <div className="flex items-center gap-4">
+                    <motion.div
+                      className="p-3 rounded-lg bg-purple-500/20"
+                      whileHover={{ scale: 1.1, rotate: -5 }}
+                      transition={{ type: "spring", stiffness: 400 }}
+                    >
+                      <Image className="w-6 h-6 text-purple-400" />
+                    </motion.div>
+                    <div>
+                      <h3 className="font-semibold text-white">Bibliothèque</h3>
+                      <p className="text-sm text-slate-400">Contenu généré</p>
+                    </div>
+                  </div>
+                </Card>
+              </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            <Card
-              className="glass-card p-6 hover-glow-green cursor-pointer transition-all duration-300"
-              onClick={() => navigate('/templates')}
-            >
-              <div className="flex items-center gap-4">
-                <motion.div
-                  className="p-3 rounded-lg bg-green-500/20"
-                  whileHover={{ scale: 1.1, rotate: 5 }}
-                  transition={{ type: "spring", stiffness: 400 }}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                <Card
+                  className="glass-card p-6 hover-glow-green cursor-pointer transition-all duration-300 scifi-card-interactive"
+                  onClick={() => navigate('/templates')}
                 >
-                  <Sparkles className="w-6 h-6 text-green-400" />
-                </motion.div>
-                <div>
-                  <h3 className="font-semibold text-white">Templates</h3>
-                  <p className="text-sm text-slate-400">Créer du contenu</p>
-                </div>
-              </div>
-            </Card>
-          </motion.div>
-        </div>
+                  <div className="flex items-center gap-4">
+                    <motion.div
+                      className="p-3 rounded-lg bg-green-500/20"
+                      whileHover={{ scale: 1.1, rotate: 5 }}
+                      transition={{ type: "spring", stiffness: 400 }}
+                    >
+                      <Sparkles className="w-6 h-6 text-green-400" />
+                    </motion.div>
+                    <div>
+                      <h3 className="font-semibold text-white">Templates</h3>
+                      <p className="text-sm text-slate-400">Créer du contenu</p>
+                    </div>
+                  </div>
+                </Card>
+              </motion.div>
+            </div>
 
             {/* Recent Activity */}
             <Card className="glass-card">
@@ -342,7 +343,7 @@ const DashboardPage = () => {
                     <p className="text-slate-400">Aucune activité récente</p>
                     <Button
                       onClick={() => navigate('/chat')}
-                      className="mt-4 bg-gradient-to-r from-cyan-500 to-purple-500"
+                      className="mt-4 bg-gradient-to-r from-cyan-500 to-purple-500 scifi-ripple"
                     >
                       <MessageSquare className="w-4 h-4 mr-2" />
                       Commencer une conversation
@@ -386,7 +387,7 @@ const DashboardPage = () => {
           </TabsContent>
 
           {/* Billing Tab */}
-          <TabsContent value="billing">
+          <TabsContent value="billing" className="tab-content-enter">
             <BillingSection />
           </TabsContent>
         </Tabs>

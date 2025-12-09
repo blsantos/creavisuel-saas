@@ -5,13 +5,37 @@ import { Badge } from '@/shared/components/ui/badge';
 import { CreditCard, Calendar, FileText, ArrowUpRight, Check, Download, Loader2 } from 'lucide-react';
 import { useTenant } from '@/shared/contexts/TenantContext';
 import { dolibarr } from '@/shared/lib/dolibarr-client';
+import { paypal } from '@/shared/lib/paypal-client';
 import { toast } from '@/shared/hooks/use-toast';
+import { supabase } from '@/shared/lib/supabase';
 
 const BillingSection = () => {
   const { tenant } = useTenant();
   const [invoices, setInvoices] = useState<any[]>([]);
   const [loadingInvoices, setLoadingInvoices] = useState(true);
   const [downloadingInvoice, setDownloadingInvoice] = useState<number | null>(null);
+  const [payingInvoice, setPayingInvoice] = useState<number | null>(null);
+  const [pricingPlans, setPricingPlans] = useState<any[]>([]);
+
+  // Load pricing plans
+  useEffect(() => {
+    const loadPlans = async () => {
+      try {
+        const { data } = await supabase
+          .from('pricing_plans')
+          .select('id, name, slug, price_monthly')
+          .order('price_monthly');
+
+        if (data) {
+          setPricingPlans(data);
+        }
+      } catch (error) {
+        console.error('Error loading plans:', error);
+      }
+    };
+
+    loadPlans();
+  }, []);
 
   // Load invoices from Dolibarr
   useEffect(() => {
@@ -68,32 +92,51 @@ const BillingSection = () => {
     }
   };
 
-  const plans = [
-    {
-      id: 'starter',
-      name: 'Starter',
-      price: '29',
-      features: ['1000 tokens/mois', '5 conversations simultanées', 'Support email'],
-      current: tenant?.plan_id === 'starter',
-    },
-    {
-      id: 'pro',
-      name: 'Pro',
-      price: '99',
-      features: ['10000 tokens/mois', '20 conversations simultanées', 'Support prioritaire', 'Webhooks n8n'],
-      current: tenant?.plan_id === 'pro',
-      recommended: true,
-    },
-    {
-      id: 'enterprise',
-      name: 'Enterprise',
-      price: 'Sur devis',
-      features: ['Tokens illimités', 'Conversations illimitées', 'Support dédié 24/7', 'SLA garanti', 'Déploiement on-premise'],
-      current: tenant?.plan_id === 'enterprise',
-    },
-  ];
+  const handlePayInvoice = async (invoice: any) => {
+    setPayingInvoice(invoice.id);
+    try {
+      const currentUrl = window.location.origin;
+      const order = await paypal.createOrder({
+        id: invoice.ref || invoice.id.toString(),
+        amount: parseFloat(invoice.total_ttc),
+        description: `Facture ${invoice.ref || invoice.id}`,
+        returnUrl: `${currentUrl}/payment-success?invoice=${invoice.id}`,
+        cancelUrl: `${currentUrl}/payment-cancel`,
+      });
 
-  const currentPlan = plans.find(p => p.current) || { name: 'Gratuit', price: '0' };
+      if (order.approvalUrl) {
+        window.location.href = order.approvalUrl;
+      } else {
+        throw new Error('URL de paiement PayPal non disponible');
+      }
+    } catch (error) {
+      console.error('Error creating PayPal order:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de créer le paiement PayPal',
+        variant: 'destructive',
+      });
+      setPayingInvoice(null);
+    }
+  };
+
+  // Find current plan from pricing_plans
+  const currentPlan = pricingPlans.find(p => p.id === tenant?.plan_id);
+
+  const planFeatures: Record<string, string[]> = {
+    'essentiel': ['12 visuels automatisés', '4 visuels créatifs', '1 réseau social', 'Hub de gestion dédié', 'Support email'],
+    'business': ['12 visuels automatisés', '8 visuels créatifs', 'Tous les réseaux', 'Ligne éditoriale', 'Support prioritaire', 'Rapports mensuels'],
+    'premium': ['Visuels illimités', 'Design sur mesure', 'Multi-établissements', 'Account manager dédié', 'Stratégie personnalisée', 'Mise en place incluse'],
+  };
+
+  const plans = pricingPlans
+    .filter(p => p.slug !== 'free')
+    .map(plan => ({
+      ...plan,
+      features: planFeatures[plan.slug] || [],
+      current: plan.id === tenant?.plan_id,
+      recommended: plan.slug === 'business',
+    }));
 
   return (
     <div className="space-y-6">
@@ -109,12 +152,12 @@ const BillingSection = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <div className="text-sm text-slate-400 mb-1">Plan</div>
-              <div className="text-2xl font-bold text-white">{currentPlan.name}</div>
+              <div className="text-2xl font-bold text-white">{currentPlan?.name || 'Gratuit'}</div>
             </div>
             <div>
               <div className="text-sm text-slate-400 mb-1">Montant</div>
               <div className="text-2xl font-bold text-cyan-400">
-                {currentPlan.price === 'Sur devis' ? currentPlan.price : `${currentPlan.price}€/mois`}
+                {currentPlan ? `${currentPlan.price_monthly}€/mois` : 'Gratuit'}
               </div>
             </div>
             <div>
@@ -150,7 +193,7 @@ const BillingSection = () => {
             <div className="text-right">
               <div className="text-sm text-slate-400">Montant estimé</div>
               <div className="text-2xl font-bold text-white mt-1">
-                {currentPlan.price === 'Sur devis' ? '—' : `${currentPlan.price}€`}
+                {currentPlan ? `${currentPlan.price_monthly}€` : '—'}
               </div>
             </div>
           </div>
@@ -176,12 +219,8 @@ const BillingSection = () => {
               <CardHeader>
                 <CardTitle className="text-white">{plan.name}</CardTitle>
                 <div className="text-3xl font-bold text-cyan-400 mt-2">
-                  {plan.price === 'Sur devis' ? plan.price : (
-                    <>
-                      {plan.price}€
-                      <span className="text-sm text-slate-400 font-normal">/mois</span>
-                    </>
-                  )}
+                  {plan.price_monthly}€
+                  <span className="text-sm text-slate-400 font-normal">/mois</span>
                 </div>
               </CardHeader>
               <CardContent>
@@ -199,7 +238,7 @@ const BillingSection = () => {
                   </Button>
                 ) : (
                   <Button className="w-full scifi-button">
-                    {plan.id === 'enterprise' ? 'Nous Contacter' : 'Mettre à Niveau'}
+                    {plan.id === 'premium' ? 'Nous Contacter' : 'Mettre à Niveau'}
                     <ArrowUpRight className="w-4 h-4 ml-1" />
                   </Button>
                 )}
@@ -219,11 +258,24 @@ const BillingSection = () => {
         </CardHeader>
         <CardContent>
           <div className="text-sm text-slate-400 mb-4">
-            💳 Intégration Stripe à venir pour gérer vos moyens de paiement de manière sécurisée.
+            Payez vos factures en toute sécurité par carte bancaire ou compte PayPal.
           </div>
-          <Button variant="outline" className="border-cyan-500/50 text-cyan-400">
-            Ajouter une carte
-          </Button>
+          <div className="flex items-center gap-3 p-4 rounded-lg bg-white/5 border border-white/10">
+            <div className="flex-1">
+              <div className="text-white font-medium">Paiement sécurisé</div>
+              <div className="text-sm text-slate-400 mt-1">
+                Carte bancaire • PayPal • Virement
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-6 bg-[#0070ba] rounded flex items-center justify-center">
+                <span className="text-white text-xs font-bold">PP</span>
+              </div>
+              <div className="w-10 h-6 bg-white rounded flex items-center justify-center">
+                <CreditCard className="w-4 h-4 text-gray-700" />
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
@@ -272,7 +324,7 @@ const BillingSection = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3">
                     <div className="text-right">
                       <div className="text-white font-bold">
                         {invoice.total_ttc ? `${parseFloat(invoice.total_ttc).toFixed(2)}€` : '—'}
@@ -287,25 +339,47 @@ const BillingSection = () => {
                          'Brouillon'}
                       </Badge>
                     </div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="border-cyan-500/50 text-cyan-400"
-                      onClick={() => handleDownloadInvoice(invoice.id)}
-                      disabled={downloadingInvoice === invoice.id}
-                    >
-                      {downloadingInvoice === invoice.id ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-                          Téléchargement...
-                        </>
-                      ) : (
-                        <>
-                          <Download className="w-4 h-4 mr-1" />
-                          PDF
-                        </>
-                      )}
-                    </Button>
+                    {invoice.statut === '1' && (
+                      <Button
+                        size="sm"
+                        className="bg-[#0070ba] hover:bg-[#003087] text-white border-0"
+                        onClick={() => handlePayInvoice(invoice)}
+                        disabled={payingInvoice === invoice.id}
+                      >
+                        {payingInvoice === invoice.id ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                            Redirection...
+                          </>
+                        ) : (
+                          <>
+                            <CreditCard className="w-4 h-4 mr-1" />
+                            PayPal
+                          </>
+                        )}
+                      </Button>
+                    )}
+                    {invoice.last_main_doc && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-cyan-500/50 text-cyan-400"
+                        onClick={() => handleDownloadInvoice(invoice.id)}
+                        disabled={downloadingInvoice === invoice.id}
+                      >
+                        {downloadingInvoice === invoice.id ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                            Téléchargement...
+                          </>
+                        ) : (
+                          <>
+                            <Download className="w-4 h-4 mr-1" />
+                            PDF
+                          </>
+                        )}
+                      </Button>
+                    )}
                   </div>
                 </div>
               ))}

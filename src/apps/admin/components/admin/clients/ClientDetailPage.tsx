@@ -27,6 +27,8 @@ import {
   Webhook,
   ExternalLink,
   Loader2,
+  Upload,
+  X,
 } from "lucide-react";
 
 interface TenantData {
@@ -73,15 +75,24 @@ interface OwnerData {
   };
 }
 
+interface PricingPlan {
+  id: string;
+  name: string;
+  slug: string;
+  price_monthly: number;
+}
+
 const ClientDetailPage = () => {
   const { clientId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
   const [tenant, setTenant] = useState<TenantData | null>(null);
   const [config, setConfig] = useState<TenantConfig | null>(null);
   const [owner, setOwner] = useState<OwnerData | null>(null);
+  const [pricingPlans, setPricingPlans] = useState<PricingPlan[]>([]);
   const [stats, setStats] = useState({
     conversations: 0,
     messages: 0,
@@ -143,6 +154,16 @@ const ClientDetailPage = () => {
         .select('*', { count: 'exact', head: true })
         .eq('tenant_id', clientId);
 
+      // Load pricing plans
+      const { data: plansData } = await supabaseAdmin
+        .from('pricing_plans')
+        .select('id, name, slug, price_monthly')
+        .order('price_monthly');
+
+      if (plansData) {
+        setPricingPlans(plansData);
+      }
+
       setStats({
         conversations: convCount || 0,
         messages: msgCount || 0,
@@ -160,6 +181,74 @@ const ClientDetailPage = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !tenant) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Erreur",
+        description: "Le fichier doit être une image",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast({
+        title: "Erreur",
+        description: "L'image ne doit pas dépasser 2MB",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setUploadingLogo(true);
+
+      // Upload to Supabase Storage
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${tenant.slug}-logo-${Date.now()}.${fileExt}`;
+      const filePath = `logos/${fileName}`;
+
+      const { error: uploadError } = await supabaseAdmin.storage
+        .from('tenant-assets')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: urlData } = supabaseAdmin.storage
+        .from('tenant-assets')
+        .getPublicUrl(filePath);
+
+      // Update config with logo URL
+      setConfig({
+        ...config!,
+        branding: { ...config!.branding, logoUrl: urlData.publicUrl }
+      });
+
+      toast({
+        title: "Logo téléchargé",
+        description: "Le logo a été téléchargé avec succès"
+      });
+    } catch (error: any) {
+      console.error('Error uploading logo:', error);
+      toast({
+        title: "Erreur",
+        description: error.message || "Impossible de télécharger le logo",
+        variant: "destructive"
+      });
+    } finally {
+      setUploadingLogo(false);
     }
   };
 
@@ -360,6 +449,25 @@ const ClientDetailPage = () => {
                   </Select>
                 </div>
                 <div>
+                  <Label className="text-slate-300">Plan d'abonnement</Label>
+                  <Select
+                    value={tenant.plan_id || 'none'}
+                    onValueChange={(v) => setTenant({ ...tenant, plan_id: v === 'none' ? null : v })}
+                  >
+                    <SelectTrigger className="bg-white/5 border-white/10 text-white mt-2">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Aucun (Gratuit)</SelectItem>
+                      {pricingPlans.map((plan) => (
+                        <SelectItem key={plan.id} value={plan.id}>
+                          {plan.name} ({plan.price_monthly}€/mois)
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
                   <Label className="text-slate-300">Email propriétaire</Label>
                   <Input
                     value={owner?.email || 'Non défini'}
@@ -377,6 +485,87 @@ const ClientDetailPage = () => {
             <Card className="scifi-glass p-6">
               <h2 className="text-xl font-bold text-white mb-4">Personnalisation de la marque</h2>
               <div className="grid grid-cols-2 gap-4">
+                <div className="col-span-2">
+                  <Label className="text-slate-300">Logo de la marque</Label>
+                  <div className="mt-2 space-y-3">
+                    {config.branding.logoUrl && (
+                      <div className="flex items-center gap-4 p-4 bg-white/5 rounded-lg border border-white/10">
+                        <img
+                          src={config.branding.logoUrl}
+                          alt="Logo"
+                          className="h-12 w-auto object-contain"
+                        />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setConfig({
+                            ...config,
+                            branding: { ...config.branding, logoUrl: '' }
+                          })}
+                          className="text-red-400 hover:text-red-300"
+                        >
+                          <X className="w-4 h-4 mr-1" />
+                          Supprimer
+                        </Button>
+                      </div>
+                    )}
+
+                    {/* File Upload */}
+                    <div>
+                      <input
+                        type="file"
+                        id="logo-upload"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleLogoUpload}
+                        disabled={uploadingLogo}
+                      />
+                      <Button
+                        variant="outline"
+                        className="w-full border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/10"
+                        onClick={() => document.getElementById('logo-upload')?.click()}
+                        disabled={uploadingLogo}
+                      >
+                        {uploadingLogo ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Téléchargement...
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="w-4 h-4 mr-2" />
+                            Télécharger un logo
+                          </>
+                        )}
+                      </Button>
+                      <p className="text-xs text-slate-500 mt-1">PNG, JPG ou SVG • Max 2MB</p>
+                    </div>
+
+                    {/* Or URL Input */}
+                    <div className="relative">
+                      <div className="absolute inset-0 flex items-center">
+                        <span className="w-full border-t border-white/10" />
+                      </div>
+                      <div className="relative flex justify-center text-xs">
+                        <span className="bg-[#1a1a1a] px-2 text-slate-500">ou</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <Input
+                        type="url"
+                        placeholder="https://example.com/logo.png"
+                        value={config.branding.logoUrl || ''}
+                        onChange={(e) => setConfig({
+                          ...config,
+                          branding: { ...config.branding, logoUrl: e.target.value }
+                        })}
+                        className="bg-white/5 border-white/10 text-white"
+                      />
+                      <p className="text-xs text-slate-500 mt-1">URL externe du logo</p>
+                    </div>
+                  </div>
+                </div>
                 <div>
                   <Label className="text-slate-300">Couleur primaire</Label>
                   <div className="flex gap-2 mt-2">

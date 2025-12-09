@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Routes, Route } from "react-router-dom";
 import { ClientConfigProvider } from "@/contexts/ClientConfigContext";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { TenantProvider } from "@/shared/contexts/TenantContext";
 import Index from "./pages/Index";
 import ClientChat from "./pages/ClientChat";
 import Admin from "./pages/Admin";
@@ -14,14 +15,16 @@ import { ProtectedAdminRoute } from "./components/ProtectedAdminRoute";
 
 const queryClient = new QueryClient();
 
-// Wrapper to conditionally apply ClientConfigProvider only for chat routes
+// Wrapper to conditionally apply ClientConfigProvider and TenantProvider for chat routes
 const ChatRoutes = () => (
-  <ClientConfigProvider>
-    <Routes>
-      <Route path="/" element={<ClientChat />} />
-      <Route path="/legacy" element={<Index />} />
-    </Routes>
-  </ClientConfigProvider>
+  <TenantProvider>
+    <ClientConfigProvider>
+      <Routes>
+        <Route path="/" element={<ClientChat />} />
+        <Route path="/legacy" element={<Index />} />
+      </Routes>
+    </ClientConfigProvider>
+  </TenantProvider>
 );
 
 const App = () => (

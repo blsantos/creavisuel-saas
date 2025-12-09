@@ -179,7 +179,7 @@ const ChatPage = () => {
               variant="ghost"
               size="icon"
               onClick={handleInstallPWA}
-              className="text-cyan-400 hover:text-cyan-300"
+              className="text-cyan-400 hover:text-cyan-300 scifi-ripple"
               title="Installer l'application"
             >
               <Download className="w-5 h-5" />
@@ -226,7 +226,7 @@ const ChatPage = () => {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="text-green-400 hover:text-green-300"
+                  className="text-green-400 hover:text-green-300 scifi-ripple"
                   title="Partager le chat"
                 >
                   <Share2 className="w-5 h-5" />
@@ -330,7 +330,7 @@ const ChatPage = () => {
               animate={{ opacity: 1, y: 0 }}
               className="text-center py-12"
             >
-              <div className="glass-card p-8 rounded-2xl inline-block">
+              <div className="glass-card p-8 rounded-2xl inline-block scifi-glow">
                 <h2 className="text-2xl font-bold text-white mb-2">
                   Bonjour !
                 </h2>
@@ -346,7 +346,7 @@ const ChatPage = () => {
               key={message.id}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : ''}`}
+              className={`flex gap-3 message-enter ${message.role === 'user' ? 'justify-end' : ''}`}
             >
               {message.role === 'assistant' && (
                 <div className="flex-shrink-0 w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center">
@@ -415,18 +415,9 @@ const ChatPage = () => {
               </div>
               <div className="glass-card p-4 rounded-2xl rounded-tl-sm">
                 <div className="flex gap-1">
-                  {[0, 1, 2].map((i) => (
-                    <motion.div
-                      key={i}
-                      animate={{ y: [0, -8, 0] }}
-                      transition={{
-                        duration: 0.6,
-                        repeat: Infinity,
-                        delay: i * 0.2,
-                      }}
-                      className="w-2 h-2 bg-slate-400 rounded-full"
-                    />
-                  ))}
+                  <span className="typing-dot"></span>
+                  <span className="typing-dot"></span>
+                  <span className="typing-dot"></span>
                 </div>
               </div>
             </motion.div>

@@ -344,4 +344,140 @@
   .scifi-button:hover::before {
     transform: translateX(100%);
   }
+
+  /* Sci-Fi Tab Animations */
+  @keyframes tabSlideIn {
+    from {
+      opacity: 0;
+      transform: translateX(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes tabSlideOut {
+    from {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    to {
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+  }
+
+  .tab-content-enter {
+    animation: tabSlideIn 0.3s ease-out;
+  }
+
+  .tab-content-exit {
+    animation: tabSlideOut 0.3s ease-out;
+  }
+
+  /* Sci-Fi Message Animations */
+  @keyframes messageSlideUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes glow-pulse {
+    0%, 100% {
+      box-shadow: 0 0 10px hsl(var(--primary) / 0.3);
+    }
+    50% {
+      box-shadow: 0 0 20px hsl(var(--primary) / 0.5);
+    }
+  }
+
+  .message-enter {
+    animation: messageSlideUp 0.3s ease-out;
+  }
+
+  .scifi-glow {
+    animation: glow-pulse 2s ease-in-out infinite;
+  }
+
+  /* Sci-Fi Typing Indicator */
+  @keyframes typing-dot {
+    0%, 60%, 100% {
+      transform: translateY(0);
+      opacity: 0.4;
+    }
+    30% {
+      transform: translateY(-10px);
+      opacity: 1;
+    }
+  }
+
+  .typing-dot {
+    @apply inline-block w-2 h-2 bg-cyan-400 rounded-full;
+    animation: typing-dot 1.4s ease-in-out infinite;
+  }
+
+  .typing-dot:nth-child(2) {
+    animation-delay: 0.2s;
+  }
+
+  .typing-dot:nth-child(3) {
+    animation-delay: 0.4s;
+  }
+
+  /* Sci-Fi Card Hover Effects */
+  .scifi-card-interactive {
+    @apply transition-all duration-300 ease-out;
+    position: relative;
+  }
+
+  .scifi-card-interactive::before {
+    content: '';
+    @apply absolute inset-0 rounded-xl opacity-0 transition-opacity duration-300;
+    background: linear-gradient(135deg,
+      hsl(var(--primary) / 0.1) 0%,
+      transparent 50%,
+      hsl(var(--accent) / 0.1) 100%
+    );
+  }
+
+  .scifi-card-interactive:hover::before {
+    opacity: 1;
+  }
+
+  /* Sci-Fi Button Ripple Effect */
+  @keyframes ripple {
+    0% {
+      transform: scale(0);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(4);
+      opacity: 0;
+    }
+  }
+
+  .scifi-ripple {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .scifi-ripple::after {
+    content: '';
+    @apply absolute bg-white/30 rounded-full pointer-events-none;
+    width: 100px;
+    height: 100px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+  }
+
+  .scifi-ripple:active::after {
+    animation: ripple 0.6s ease-out;
+  }
 }

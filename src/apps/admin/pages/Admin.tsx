@@ -6,7 +6,7 @@ import { Input } from "../components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { LogOut, Lock, Home, Save, Eye, Monitor, Tablet, Smartphone, RotateCcw, ArrowLeft, LayoutDashboard, Wrench, Users, Palette, Brain, BarChart3 } from "lucide-react";
+import { LogOut, Lock, Home, Save, Eye, Monitor, Tablet, Smartphone, RotateCcw, ArrowLeft, LayoutDashboard, Wrench, Users, Palette, Brain, BarChart3, CreditCard } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import GrapesEditor from "../components/admin/GrapesEditor";
 import PagesDashboard from "../components/admin/PagesDashboard";
@@ -15,6 +15,7 @@ import Clients from "./Clients";
 import ImageStudioDashboard from "./ImageStudioDashboard";
 import AIAssistants from "./AIAssistants";
 import Dashboard from "./Dashboard";
+import BillingManagement from "../components/admin/billing/BillingManagement";
 import { getPageName } from "@/lib/contentToHtml";
 import creavisuelLogo from "@/assets/logo-creavisuel2025.png";
 import "../components/admin/GrapesEditorStyles.css";
@@ -61,7 +62,7 @@ const AdminLogin = () => {
 };
 
 type AdminView = "dashboard" | "editor";
-type AdminTab = "stats" | "pages" | "clients" | "ai" | "studio" | "tools";
+type AdminTab = "stats" | "pages" | "clients" | "billing" | "ai" | "studio" | "tools";
 
 const AdminDashboard = () => {
   const { logout } = useAuth();
@@ -164,6 +165,13 @@ const AdminDashboard = () => {
                 Clients
               </TabsTrigger>
               <TabsTrigger
+                value="billing"
+                className="data-[state=active]:bg-transparent data-[state=active]:text-white text-gray-400 px-0 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-primary"
+              >
+                <CreditCard className="w-4 h-4 mr-2" />
+                Facturation
+              </TabsTrigger>
+              <TabsTrigger
                 value="ai"
                 className="data-[state=active]:bg-transparent data-[state=active]:text-white text-gray-400 px-0 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-primary"
               >
@@ -197,6 +205,10 @@ const AdminDashboard = () => {
 
           <TabsContent value="clients" className="flex-1 mt-0 h-[calc(100vh-112px)]">
             <Clients />
+          </TabsContent>
+
+          <TabsContent value="billing" className="flex-1 mt-0 h-[calc(100vh-112px)] overflow-auto p-6">
+            <BillingManagement />
           </TabsContent>
 
           <TabsContent value="ai" className="flex-1 mt-0 h-[calc(100vh-112px)]">
