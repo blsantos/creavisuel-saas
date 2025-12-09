@@ -104,14 +104,15 @@ ncat-ncat-1             Up 4 months   0.0.0.0:8085->8080/tcp
 **Production (.env):**
 ```bash
 VITE_SUPABASE_URL=https://supabase.lecoach.digital
-VITE_SUPABASE_ANON_KEY=eyJhbGci...
+VITE_SUPABASE_ANON_KEY=<your-anon-key>
+SUPABASE_SERVICE_ROLE_KEY=<your-service-role-key>
 VITE_APP_URL=https://creavisuel.pro
 ```
 
-**Hardcoded (supabase-admin.ts):**
-```typescript
-SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIiwiaXNzIjoic3VwYWJhc2UiLCJpYXQiOjE3NjQ3OTMwNjcsImV4cCI6MjA4MDE1MzA2N30.VRseImlnW5TTquG91vD6xg5WB4IQ760iAshWjajwttE
-```
+**⚠️ SÉCURITÉ:**
+- Toutes les clés API sont maintenant chargées depuis les variables d'environnement
+- SERVICE_ROLE_KEY ne doit JAMAIS être exposée au frontend
+- Voir `.env.example` pour la configuration complète
 
 ### DNS (Hostinger)
 
@@ -179,10 +180,13 @@ CNAME chat               → 46.202.175.252  (TTL: 14400)
 
 ### 1. Security
 
-- ✅ Service role key **JAMAIS exposée** au frontend
+- ✅ Service role key chargée depuis variables d'environnement
+- ✅ Protection contre l'import côté client (typeof window check)
 - ✅ RLS policies actives sur toutes tables
+- ✅ Validation des variables d'environnement au démarrage
 - ⚠️ Admin password à changer en production
 - ⚠️ CORS Hostinger API (mode MOCK actuel)
+- ✅ Aucune clé hardcodée dans le code source
 
 ### 2. Performance
 

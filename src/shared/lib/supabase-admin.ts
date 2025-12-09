@@ -16,9 +16,31 @@
 
 import { createClient } from '@supabase/supabase-js';
 
+// ⚠️ SECURITY CHECK: This file should NEVER be imported in frontend code
+if (typeof window !== 'undefined') {
+  throw new Error(
+    '🚨 SECURITY ERROR: supabaseAdmin is for server-side use only. ' +
+    'Do not import this file in frontend code. ' +
+    'Use src/shared/lib/supabase.ts instead.'
+  );
+}
+
 // Service role key from environment (NOT exposed to client)
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://supabase.lecoach.digital';
-const SERVICE_ROLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIiwiaXNzIjoic3VwYWJhc2UiLCJpYXQiOjE3NjQ3OTMwNjcsImV4cCI6MjA4MDE1MzA2N30.VRseImlnW5TTquG91vD6xg5WB4IQ760iAshWjajwttE';
+const SUPABASE_URL =
+  process.env.SUPABASE_URL ||
+  process.env.VITE_SUPABASE_URL ||
+  'https://supabase.lecoach.digital';
+
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+// Validate that SERVICE_ROLE_KEY is present
+if (!SERVICE_ROLE_KEY) {
+  throw new Error(
+    '🚨 SECURITY ERROR: SUPABASE_SERVICE_ROLE_KEY environment variable is missing. ' +
+    'This key is required for admin operations. ' +
+    'Add it to your .env file (see .env.example).'
+  );
+}
 
 // Create admin client with service_role privileges
 export const supabaseAdmin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {

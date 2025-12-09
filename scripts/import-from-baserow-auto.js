@@ -5,14 +5,25 @@
  * Table: Clients-donnes (ID: 814)
  */
 
+import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
 
-const BASEROW_URL = 'https://baserow.lecoach.digital';
-const BASEROW_TOKEN = 'K83XsQKY35KXx1qp27iS9XZsYdx5PvZa';
+const BASEROW_URL = process.env.BASEROW_URL || 'https://baserow.lecoach.digital';
+const BASEROW_TOKEN = process.env.BASEROW_TOKEN;
 const TABLE_ID = '814';
 
-const SUPABASE_URL = 'https://supabase.lecoach.digital';
-const SERVICE_ROLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIiwiaXNzIjoic3VwYWJhc2UiLCJpYXQiOjE3NjQ3OTMwNjcsImV4cCI6MjA4MDE1MzA2N30.VRseImlnW5TTquG91vD6xg5WB4IQ760iAshWjajwttE';
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://supabase.lecoach.digital';
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!SERVICE_ROLE_KEY) {
+  console.error('❌ SUPABASE_SERVICE_ROLE_KEY manquant dans les variables d\'environnement');
+  process.exit(1);
+}
+
+if (!BASEROW_TOKEN) {
+  console.error('❌ BASEROW_TOKEN manquant dans les variables d\'environnement');
+  process.exit(1);
+}
 
 const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 

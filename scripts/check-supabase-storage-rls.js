@@ -1,9 +1,15 @@
 #!/usr/bin/env node
 
+import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = 'https://supabase.lecoach.digital';
-const supabaseServiceKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImphYXh4d3F2bGdob3lqcGFrbWNqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczMzIyNTgxOSwiZXhwIjoyMDQ4ODAxODE5fQ.eVF7geCgFm_7v9wgYO-UYDSd4L-SuT4lzkF4WPUA4Dk';
+const supabaseUrl = process.env.SUPABASE_URL || 'https://supabase.lecoach.digital';
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseServiceKey) {
+  console.error('❌ SUPABASE_SERVICE_ROLE_KEY manquant dans les variables d\'environnement');
+  process.exit(1);
+}
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 

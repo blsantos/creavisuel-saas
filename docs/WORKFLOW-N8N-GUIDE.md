@@ -478,8 +478,8 @@ CREATE TABLE n8n_conversations (
 
 ```env
 SUPABASE_URL=https://supabase.lecoach.digital
-SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-OPENAI_API_KEY=sk-...
+SUPABASE_ANON_KEY=<your-anon-key>
+OPENAI_API_KEY=<your-openai-key>
 REDIS_HOST=redis
 REDIS_PORT=6379
 ```

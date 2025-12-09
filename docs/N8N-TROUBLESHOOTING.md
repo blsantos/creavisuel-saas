@@ -123,11 +123,11 @@ Doit afficher au moins une policy permettant l'accès `anon`.
 ```bash
 # Test GET
 curl -X GET "https://supabase.lecoach.digital/rest/v1/n8n_conversations?limit=1" \
-  -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzY0NzkzMDU2LCJleHAiOjIwODAxNTMwNTZ9.3PK2meYhQpHE5TSpRC8TP7owHpBfCFXsrTTOuNCtgbc"
+  -H "apikey: <SUPABASE_ANON_KEY>"
 
 # Test POST
 curl -X POST "https://supabase.lecoach.digital/rest/v1/n8n_conversations" \
-  -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzY0NzkzMDU2LCJleHAiOjIwODAxNTMwNTZ9.3PK2meYhQpHE5TSpRC8TP7owHpBfCFXsrTTOuNCtgbc" \
+  -H "apikey: <SUPABASE_ANON_KEY>" \
   -H "Content-Type: application/json" \
   -H "Prefer: return=representation" \
   -d '{
